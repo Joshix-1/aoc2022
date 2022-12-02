@@ -1,6 +1,6 @@
 import sys
 
-def main():
+def main() -> None:
     in_ = sys.stdin.read()
     score = [0, 0]
     for row in in_.split("\n"):
@@ -38,4 +38,5 @@ def main():
                score[i] += 6
     print(f"1: {score[0]}\n2: {score[1]}")
 
-main()
+if __name__ == "__main__":
+    main()
