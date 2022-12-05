@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
-def solve(input_: str) -> tuple[int, int]:
+def solve(input_: str) -> tuple[int | str, int | str]:
     lines: list[str] = list(filter(None, input_.split("\n")))
 
     res1, res2 = 0, 0
