@@ -2,22 +2,16 @@
 import sys
 
 def solve(input_: str) -> tuple[int | str, int | str]:
-    chars: list[str] = list(filter(None, input_.strip()))
-
     res1, res2 = 0, 0
 
-    for i in range(len(chars) - 4):
-        ch = chars[i]
-        _4 = chars[i:i+4]
-        print(f"{res1=}, {res2=}, {ch=}, {_4=}")
+    for i in range(len(input_) - 4):
+        _4 = input_[i:i+4]
         if len(set(_4)) == 4:
             res1 = i+4
             break
 
-    for i in range(len(chars) - 14):
-        ch = chars[i]
-        _14 = chars[i:i+14]
-        print(f"{res1=}, {res2=}, {ch=}, {_14=}")
+    for i in range(len(input_) - 14):
+        _14 = input_[i:i+14]
         if len(set(_14)) == 14:
             res2 = i+14
             break
