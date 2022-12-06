@@ -14,6 +14,14 @@ def solve(input_: str) -> tuple[int | str, int | str]:
             res1 = i+4
             break
 
+    for i in range(len(chars) - 14):
+        ch = chars[i]
+        _14 = chars[i:i+14]
+        print(f"{res1=}, {res2=}, {ch=}, {_14=}")
+        if len(set(_14)) == 14:
+            res2 = i+14
+            break
+
     return res1, res2
 
 def main() -> None:
