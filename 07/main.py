@@ -62,13 +62,19 @@ def solve(input_: str) -> tuple[int | str, int | str]:
             size = int(size)
             current_dir.children[file_name] = size
 
-    root_dir.get_size()
+    space = 70000000 - 30000000
+    rd = root_dir.get_size()
+
+    dirs_to_free = []
     for dir in dirs:
         size = dir.get_size()
         print(f"{dir=}, {size=}")
         if size <= 100000:
             res1 += size
+        if rd - size <= space:
+            dirs_to_free.append(size)
 
+    res2 = list(sorted(dirs_to_free))[0]
     return res1, res2
 
 def main() -> None:
