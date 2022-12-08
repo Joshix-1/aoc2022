@@ -40,21 +40,24 @@ def solve(input_: str) -> tuple[int | str, int | str]:
             x2 = 1
             for x_ in reversed(list(range(x))):
                 assert x_ != x
+                x2 += 1
                 if line[x_] >= tree:
                     break
-                x2 += 1
+                
             y1 = 1
             for y_ in range(y + 1, len(cols)):
                 assert y_ != y
+                y1 += 1
                 if cols[y_] >= tree:
                     break
-                y1 += 1
+                
             y2 = 1
             for y_ in reversed(list(range(y))):
                 assert y_ != y
+                y2 += 1
                 if cols[y_] >= tree:
                     break
-                y2 += 1
+                
             senic_scores.append(x1 * x2 * y1 * y2)
 
     return res1, max(senic_scores)
