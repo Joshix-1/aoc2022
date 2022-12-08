@@ -30,28 +30,28 @@ def solve(input_: str) -> tuple[int | str, int | str]:
             res1 += vis
             print(f"{x=}, {y=}, {vis=}, {tree=!r}, {res1=}")
 
-            x1 = 1
+            x1 = 0
             for x_ in range(x + 1, len(line)):
                 assert x_ != x
                 if line[x_] >= tree:
                     break
                 x1 += 1
             
-            x2 = 1
+            x2 = 0
             for x_ in reversed(list(range(x))):
                 assert x_ != x
                 x2 += 1
                 if line[x_] >= tree:
                     break
                 
-            y1 = 1
+            y1 = 0
             for y_ in range(y + 1, len(cols)):
                 assert y_ != y
                 y1 += 1
                 if cols[y_] >= tree:
                     break
                 
-            y2 = 1
+            y2 = 0
             for y_ in reversed(list(range(y))):
                 assert y_ != y
                 y2 += 1
