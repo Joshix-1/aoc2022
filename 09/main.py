@@ -24,6 +24,8 @@ class Position:
         self.visited_pos.add((self.x, self.y))
 
     def move_to(self, head: "Position") -> None:
+        if self.x == head.x and self.y == head.y:
+            return
         if abs(self.x - head.x) <= 1 and abs(self.y - head.y) <= 1:
             return
         diff_x = head.x - self.x
@@ -54,8 +56,8 @@ def solve(input_: str) -> tuple[int | str, int | str]:
 
     res1, res2 = 0, 0
 
-    head = Position(0, 0, set((0, 0)))
-    tail = Position(0, 0, set((0, 0)))
+    head = Position(0, 0, {(0, 0)})
+    tail = Position(0, 0, {(0, 0)})
 
     for line in lines:
         dir, num = line[0], int(line[2])
@@ -64,7 +66,7 @@ def solve(input_: str) -> tuple[int | str, int | str]:
             tail.move_to(head)
         print(f"{dir, num}, {head=!s}, {tail=!s}")
 
-
+    print(tail.visited_pos)
     return len(tail.visited_pos), res2
 
 def main() -> None:
