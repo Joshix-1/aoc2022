@@ -65,11 +65,13 @@ def solve(input_: str) -> tuple[int | str, int | str]:
         dir, num = line[0], int(line.split(" ")[1])
         for i in range(num):
             head.move(dir, 1)
-            tail.move_to(head)
+            tail[0].move_to(head)
+            for t in range(1, len(tail)):
+                tail[t].move_to(tail[t-1])
             print(f"{dir, num}, {head=!s}, {tail=!s}")
 
     #print(tail.visited_pos)
-    return len(tail[8].visited_pos), res2
+    return len(tail[0].visited_pos), len(tail[8].visited_pos)
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
