@@ -7,7 +7,7 @@ class Position:
     x: int
     y: int
 
-    visited_pos: set[tuple[int, int]]
+    visited_pos: "set[tuple[int, int]]"
 
     def move(self, dir_: str, dist: int) -> int:
         assert dist == 1
@@ -30,8 +30,11 @@ class Position:
             return
         diff_x = head.x - self.x
         diff_y = head.y - self.y
-        assert min(abs(diff_x), abs(diff_y)) <= 1
-        if abs(diff_x) == 2:
+        assert min(abs(diff_x), abs(diff_y)) <= 1 or abs(diff_x) == abs(diff_y) == 2
+        if 2 == abs(diff_x) == abs(diff_y):
+            self.x += abs(diff_x) // diff_x
+            self.y += abs(diff_y) // diff_y
+        elif abs(diff_x) == 2:
             self.x += diff_x // 2
             if abs(diff_y) == 1:
                 self.y += diff_y
@@ -45,14 +48,14 @@ class Position:
                 assert not diff_x
         else:
             assert False
-        assert abs(self.x - head.x) + abs(self.y - head.y) <= 1
+        assert abs(self.x - head.x) + abs(self.y - head.y) <= 2
         self.visited_pos.add((self.x, self.y))
 
     def __str__(self):
         return f"{self.x}, {self.y}"
 
-def solve(input_: str) -> tuple[int | str, int | str]:
-    lines: list[str] = list(filter(None, input_.split("\n")))
+def solve(input_: str) -> "tuple[int | str, int | str]":
+    lines: "list[str]" = list(filter(None, input_.split("\n")))
 
     res1, res2 = 0, 0
 
