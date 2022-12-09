@@ -57,17 +57,19 @@ def solve(input_: str) -> tuple[int | str, int | str]:
     res1, res2 = 0, 0
 
     head = Position(0, 0, {(0, 0)})
-    tail = Position(0, 0, {(0, 0)})
+    tail = []
+    for i in range(9):
+        tail.append(Position(0, 0, {(0, 0)}))
 
     for line in lines:
-        dir, num = line[0], int(line[2])
+        dir, num = line[0], int(line.split(" ")[1])
         for i in range(num):
             head.move(dir, 1)
             tail.move_to(head)
-        print(f"{dir, num}, {head=!s}, {tail=!s}")
+            print(f"{dir, num}, {head=!s}, {tail=!s}")
 
-    print(tail.visited_pos)
-    return len(tail.visited_pos), res2
+    #print(tail.visited_pos)
+    return len(tail[8].visited_pos), res2
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
