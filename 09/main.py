@@ -54,8 +54,8 @@ def solve(input_: str) -> tuple[int | str, int | str]:
 
     res1, res2 = 0, 0
 
-    head = Position(0, 0, set())
-    tail = Position(0, 0, set())
+    head = Position(0, 0, set((0, 0)))
+    tail = Position(0, 0, set((0, 0)))
 
     for line in lines:
         dir, num = line[0], int(line[2])
