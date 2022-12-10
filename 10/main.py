@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 import sys
+import time
 
 def print_crt(crt):
     for l in crt:
         print("".join(l))
 
+FANCY_DRAWING = __debug__ and sys.stderr.isatty()
+SLEEP = 0.1
+ON_CHAR = "#"
+OFF_CHAR = " "
+DEFAULT_CHAR = "."
+
 def draw(crt, x, cycle):
     crt_x = (cycle - 1) % 40
     lit = crt_x in (x - 1, x, x + 1)
     cycle = (cycle - 1) % 240
-    print((cycle) // 40, crt_x)
-    crt[(cycle) // 40][crt_x] = "#" if lit else "."
+    # print((cycle) // 40, crt_x)
+    crt[(cycle) // 40][crt_x] = ON_CHAR if lit else OFF_CHAR
 
 def solve(input_: str) -> tuple[int | str, int | str]:
     lines: list[str] = list(filter(None, input_.split("\n")))
@@ -19,13 +26,15 @@ def solve(input_: str) -> tuple[int | str, int | str]:
 
     x = 1
 
-    crt = [["-"] * 40] * 6
+    crt = [[DEFAULT_CHAR] * 40] * 6
     for i in range(len(crt)):
-        crt[i] = list(tuple(crt[i]))
-    sprite_w = 3
-    
+        crt[i] = list(crt[i])
+
     cycle = 1
     for line in lines:
+        if FANCY_DRAWING:
+            time.sleep(SLEEP)
+            print("\033c", end="")
         print(f"{cycle=}, {x=}, {line=}")
         draw(crt, x, cycle)
         print_crt(crt)
@@ -36,6 +45,9 @@ def solve(input_: str) -> tuple[int | str, int | str]:
         else:
             assert line.startswith("addx ")
             cycle += 1
+            if FANCY_DRAWING:
+                time.sleep(SLEEP)
+                print("\033c", end="")
             draw(crt, x, cycle)
             if cycle in {20, 60, 100, 140, 180, 220}:
                 res1 += cycle * x
