@@ -18,7 +18,7 @@ class Monkey:
     def __str__(self):
         return f"M{self.index} {self.items} {self.test} {self.count}"
 
-def solve(input_: str) -> tuple[int | str, int | str]:
+def solve2(input_: str) -> tuple[int | str, int | str]:
     monkeys: list[Monkey] = list(map(Monkey, filter(None, input_.split("\n\n"))))
 
     for i, m in enumerate(monkeys):
@@ -48,10 +48,35 @@ def solve(input_: str) -> tuple[int | str, int | str]:
     print(f"{activity=}")
     return 0, activity[-1] * activity[-2]
 
+def solve1(input_: str) -> tuple[int | str, int | str]:
+    monkeys: list[Monkey] = list(map(Monkey, filter(None, input_.split("\n\n"))))
+
+    for i, m in enumerate(monkeys):
+        assert i == m.index
+
+    for round in range(20):
+        for m in monkeys:
+            #print(f"{m=!s}")
+            while m.items:
+                m.count += 1
+                m.items[0] = m.operation(m.items[0])
+                m.items[0] = m.items[0] // 3
+                recip = m.test[2] if m.items[0] % m.test[0] else m.test[1]
+                monkeys[recip].items.append(m.items.pop(0))
+
+    for m in monkeys:
+        print(str(m))
+
+    activity = list(sorted([m.count for m in monkeys]))
+    print(f"{activity=}")
+    return activity[-1] * activity[-2], 0
+
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
-        res1, res2 = solve(sys.stdin.read())
+        input_ = sys.stdin.read()
+        res1, _ = solve1(input_)
+        _, res2 = solve2(input_)
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
