@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import sys
-from dataclasses import dataclass
-from pathlib import Path
-from string import ascii_lowercase
 
-sys.setrecursionlimit(16385)
+from dataclasses import dataclass
+from itertools import chain
+from string import ascii_lowercase
 
 def get_next(i, x, y):
     if i == 0:
@@ -80,11 +79,6 @@ class Cell:
     def __hash__(self) -> int:
         return hash(self.pos)
 
-    def __repr__(self):
-        return str(self)
-    def __str__(self) -> int:
-        return f"{self.char}({self.x}, {self.y})"
-
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
     lines: list[str] = list(filter(None, input_.split("\n")))
@@ -94,39 +88,38 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
 
     start_cell = None
     end_cell = None
-    cell_count = 0
     for line in maze:
         for cell in line:
             if cell.is_start:
                 start_cell = cell
             elif cell.is_end:
                 end_cell = cell
-            cell_count += 1
 
     assert start_cell and end_cell
 
     stack: "list[tuple[int, Cell, Cell | None]]" = [(0, end_cell, None)]
     while stack:
         dist, cell, prev = stack.pop(0)
-        print(dist, cell)
         if cell.dist is None:
             cell.dist = dist
         else:
             continue
         dist += 1
         stack.extend(
-            [
-                (dist, n, cell) for n in cell.neighbors
-                if n.dist is None and n != prev
-            ]
+            (dist, n, cell) for n in cell.neighbors
+            if n.dist is None and n != prev
         )
 
-    return start_cell.dist, 0
+    return start_cell.dist, min(
+        cell.dist
+        for cell in chain(*maze)
+        if not cell.height and cell.dist is not None
+    )
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
-        res1, res2 = solve((Path(__file__).absolute().parent / "input").read_text())
+        res1, res2 = solve(sys.stdin.read())
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
