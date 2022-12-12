@@ -17,6 +17,7 @@ def get_next(i, x, y):
 class Cell:
     char: str
     dist: int = None
+    new_char: str = None
 
 def solve_maze(maze: "list[list[str]]", x, y, ev: str) -> int:
     if min(x, y) < 0 or x >= len(maze[0]) or y >= len(maze):
@@ -24,16 +25,16 @@ def solve_maze(maze: "list[list[str]]", x, y, ev: str) -> int:
     curr = maze[y][x].char
     if curr == "E":
         maze[y][x].dist = 0
-        return int(ev in {"z", "y"})
-    if curr == ".":
-        return None
-    if curr != "S" and curr not in "<>V^":
+        return 0 if ev in {"z", "y"} else None
+    if curr != "S":
         diff = ord(curr) - ord(ev)
         if diff > 1:
             #print(diff, ev, curr)
             return None
+    if maze[y][x].new_char:
+        return maze[y][x].dist
     # can go to this
-    maze[y][x] = Cell(".")
+    maze[y][x].new_char = "."
     ret = [0, 0, 0, 0]
     for i in reversed(range(4)):
         ret[i] = solve_maze(
@@ -44,7 +45,7 @@ def solve_maze(maze: "list[list[str]]", x, y, ev: str) -> int:
     ret_ = list(filter(lambda x: x is not None, ret))
     if ret_:
         maze[y][x].dist = min(ret_) + 1
-        maze[y][x].char = ">V<^"[ret.index(min(ret_))]
+        maze[y][x].new_char = ">V<^"[ret.index(min(ret_))]
         return min(ret_) + 1
     return maze[y][x].dist
 
@@ -68,7 +69,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     )
 
     for line in maze:
-        print("".join([c.char for c in line]))
+        print("".join([c.new_char or c.char for c in line]))
         pass # print(f"{res1=}, {res2=}, {line=}")
 
     return res1, res2
