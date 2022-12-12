@@ -23,7 +23,7 @@ class Cell:
     char: str
     x: int
     y: int
-    _distance: "None | int" = None
+    dist: "None | int" = None
     _neighbors: "None | list[Cell]" = None
     _height: "None | int" = None
 
@@ -72,45 +72,9 @@ class Cell:
             ]
         return list(self._neighbors)
 
-    def distance(self, n_before: "Cell") -> int:
-        if self._distance is not None:
-            return self._distance
-        if self.is_end:
-            return 0
-        else:
-            if n_before.is_end and n_before in self.neighbors:
-                self._distance = 1
-                return 1
-            neighbors = [n for n in self.neighbors if n != n_before]
-            if neighbors:
-                dist = (
-                    0
-                    if any(c.is_end for c in neighbors)
-                    else min(c.distance(self) for c in neighbors)
-                )
-            else:
-                assert self.neighbors == [n_before]
-                self._distance = n_before.distance(self) + 1
-                return self._distance
-            if self.connection_is_bi(n_before):
-                other_dist = n_before.distance(self)
-                if dist < other_dist:
-                    self._distance = dist
-                    n_before._distance = dist + 1
-                elif other_dist < dist:
-                    self._distance = other_dist + 1
-                    other_dist._distance = other_dist
-                else:
-                    self._distance = dist
-            else:
-                assert n_before not in self.neighbors
-                self._distance = dist
-            return dist
-
-    def connection_is_bi(self, other: "Cell") -> bool:
-        return other in self.neighbors and self in other.neighbors
-
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Cell):
+            return False
         return self.pos == other.pos
 
     def __hash__(self) -> int:
@@ -140,23 +104,24 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
             cell_count += 1
 
     assert start_cell and end_cell
-    print(end_cell, end_cell.distance(None))
-    dists = [
-        (n, n.distance(end_cell))
-        for n in end_cell.neighbors
-    ]
-    curr_cells: set[Cell] = {end_cell}
-    visited: dict[tuple[int, int], int] = {}
-    while len(visited) < cell_count and curr_cells:
-        cell = curr_cells.pop()
-        for n in cell.neighbors:
-            if n.pos in visited:
-                continue
-            if cell in n.neighbors:
-                visited[n.pos] = n.distance(cell)
-                curr_cells.add(n)
 
-    return start_cell._distance, 0
+    stack: "list[tuple[int, Cell, Cell | None]]" = [(0, end_cell, None)]
+    while stack:
+        dist, cell, prev = stack.pop(0)
+        print(dist, cell)
+        if cell.dist is None:
+            cell.dist = dist
+        else:
+            continue
+        dist += 1
+        stack.extend(
+            [
+                (dist, n, cell) for n in cell.neighbors
+                if n.dist is None and n != prev
+            ]
+        )
+
+    return start_cell.dist, 0
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
