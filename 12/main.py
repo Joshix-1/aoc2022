@@ -42,6 +42,11 @@ def solve_maze(maze: "list[list[str]]", x, y, ev: str) -> int:
             *get_next(i,x,y),
             curr if curr != "S" else "a"
         )
+        if ret[i] is not None:
+            if maze[y][x].dist is None:
+                maze[y][x].dist = ret[i] + 1
+            else:
+                maze[y][x].dist = min(maze[y][x].dist, ret[i] + 1)
     ret_ = list(filter(lambda x: x is not None, ret))
     if ret_:
         maze[y][x].dist = min(ret_) + 1
@@ -55,12 +60,6 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     res1, res2 = 0, 0
     assert lines[0][0] == "S" or lines[20][0] == "S"
     maze = [[Cell(c) for c in x] for x in lines]
-    res1 = solve_maze(
-        maze,
-        0,
-        0 if lines[0][0] == "S" else 20,
-        "a"
-    )
     res1 = solve_maze(
         maze,
         0,
