@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
+
 def solve(input_: str) -> tuple[int | str, int | str]:
     lines: list[str] = list(filter(None, input_.split("\n")))
 
@@ -12,6 +13,7 @@ def solve(input_: str) -> tuple[int | str, int | str]:
 
     return res1, res2
 
+
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
@@ -19,6 +21,7 @@ def main() -> None:
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
+
 
 if __name__ == "__main__":
     sys.exit(main())
