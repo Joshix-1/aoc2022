@@ -19,17 +19,37 @@ def to_ints(x, y) -> tuple[int, int]:
             return a, b
     return 1, 1
 
+class X:
+    def __init__(self, x):
+        self.x = x
+    def __lt__(self, other):
+        a, b = to_ints(self.x, other.x)
+        return a < b
+
 def solve(input_: str) -> tuple[int | str, int | str]:
     lines: list[str] = list(filter(None, input_.split("\n\n")))
 
-    res1, res2 = 0, 0
+    res1, res2 = 0, 1
+
+    packets = []
 
     for i, pairs in enumerate(lines, 1):
         one, two = list(filter(None, pairs.split("\n")))
         one, two = eval(one), eval(two)
+        packets.extend([one, two])
         a, b = to_ints(one, two)
         print(i if a <= b else 0, one, two)
         res1 += i if a <= b else 0
+
+    div_a, div_b = [[2]], [[6]]
+    packets.extend([div_a, div_b])
+
+    packets.sort(key=X)
+
+    for i, p in enumerate(packets, 1):
+        print(i, p)
+        if p is div_b or p is div_a:
+            res2 *= i
 
     return res1, res2
 
