@@ -29,11 +29,10 @@ class Wall:
 def solve(input_: str) -> tuple[int | str, int | str]:
     lines: list[str] = list(filter(None, input_.split("\n")))
 
-    res2 = 0
-
     tiles: set[tuple[int, int]] = set()
     for line in lines:
         tiles |= Wall(line).tiles
+    tiles2 = set(tuple(tiles))
 
     bottom_most = max(xy[1] for xy in tiles)
     print(bottom_most, tiles)
@@ -42,7 +41,6 @@ def solve(input_: str) -> tuple[int | str, int | str]:
     while True:
         sand_pos = sand_origin
         while sand_pos[1] < bottom_most + 1:
-            print(sand_pos)
             if (sand_pos[0], sand_pos[1] + 1) not in tiles:  # down
                 sand_pos = (sand_pos[0], sand_pos[1] + 1)
             elif (sand_pos[0] - 1, sand_pos[1] + 1) not in tiles:  # left
@@ -52,12 +50,34 @@ def solve(input_: str) -> tuple[int | str, int | str]:
             else:  # rests
                 sand_tiles.add(sand_pos)
                 tiles.add(sand_pos)
-                print(sand_pos)
                 break
         else:
             break
 
-    return len(sand_tiles), res2
+    sand_tiles2: set[tuple[int, int]] = set()
+    while True:
+        sand_pos = sand_origin
+        while True:
+            if sand_pos[1] == bottom_most + 1:
+                sand_tiles2.add(sand_pos)
+                tiles2.add(sand_pos)
+                if sand_pos == sand_origin:
+                    return len(sand_tiles), len(sand_tiles2)
+                break
+            elif (sand_pos[0], sand_pos[1] + 1) not in tiles2:  # down
+                sand_pos = (sand_pos[0], sand_pos[1] + 1)
+            elif (sand_pos[0] - 1, sand_pos[1] + 1) not in tiles2:  # left
+                sand_pos = (sand_pos[0] - 1, sand_pos[1] + 1)
+            elif (sand_pos[0] + 1, sand_pos[1] + 1) not in tiles2:  # right
+                sand_pos = (sand_pos[0] + 1, sand_pos[1] + 1)
+            else:  # rests
+                sand_tiles2.add(sand_pos)
+                tiles2.add(sand_pos)
+                if sand_pos == sand_origin:
+                    return len(sand_tiles), len(sand_tiles2)
+                break
+
+    return len(sand_tiles), len(sand_tiles2)
 
 
 def main() -> None:
