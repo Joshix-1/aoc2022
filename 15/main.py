@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import re
 import sys
+from typing import Iterable
+from itertools import chain
 
 
 def manhattan_dist(a: "tuple[int, int]", b: "tuple[int, int]") -> int:
@@ -40,67 +42,58 @@ class Sensor:
             return None
         return max(pos[0], start), min(pos[1], end)
 
-    def is_in_range(self, x, y) -> bool:
-        return manhattan_dist(self.sensor, (x, y)) <= self.distance
+    def is_in_range(self, pos: tuple[int, int]) -> bool:
+        return manhattan_dist(self.sensor, pos) <= self.distance
 
-    def just_out_of_range(self, min_: int, max_: int) -> "set[tuple[int, int]]":
+    def just_out_of_range(self, min_: int, max_: int) -> "Iterable[tuple[int, int]]":
         dist = self.distance + 1
         x, y = self.sensor
-        positions = set()
         for diff_x in range(-dist, dist + 1):
             _x, _y = x + diff_x, y + dist - diff_x
             if min_ <= _x <= max_ and min_ <= _y <= max_:
-                positions.add((_x, _y))
-        return positions
+                yield _x, _y
+        return
+
 
 def start_end_to_set(start_end: "None | tuple[int, int]") -> "set[int]":
     if not start_end:
         return set()
     return set(range(start_end[0], start_end[1] + 1))
 
-#def pos_in_range(pos: "tuple[int, int]", start, end) -> bool:
-#    return start <= pos[0] <= end and start <= pos[1] <= end
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
     lines: list[str] = list(filter(None, input_.split("\n")))
-
-    res2 = []
 
     sensors = [
         Sensor(line)
         for line in lines
     ]
     covered_pos: "set[int]" = set()
+
     y = 10 if "test" in sys.argv else 200_0000
+
     for sensor in sensors:
-        print(f"{sensor!s}: {sensor.covered_x(y)}")
         covered_pos |= start_end_to_set(sensor.covered_x(y))
 
     for sensor in sensors:
         if sensor.beacon[1] == y and sensor.beacon[0] in covered_pos:
             covered_pos.remove(sensor.beacon[0])
 
-    print("1:", len(covered_pos))
-    max_pos = 20 if "test" in sys.argv else 4_000_000
-    try:
-        just_out_of_range = set()
-        for sensor in sensors:
-            just_out_of_range |= sensor.just_out_of_range(0, max_pos)
-        print("len just_out_of_range", len(just_out_of_range))
-        for x, y in just_out_of_range:
-            in_range = False
-            for sensor in sensors:
-                if sensor.is_in_range(x, y):
-                    in_range = True
-                    break
-            if not in_range:
-                res2.append((x, y))
-    except:
-        print("y=",y)
-        raise
+    print("first done")
 
-    print(f"{res2}")
-    return len(covered_pos), res2[0][0] * 4000000 + res2[0][1]
+    max_pos = 20 if "test" in sys.argv else 4_000_000
+    for xy in chain.from_iterable(
+        sensor.just_out_of_range(0, max_pos) for sensor in sensors
+    ):
+        in_range = False
+        for sensor in sensors:
+            if sensor.is_in_range(xy):
+                in_range = True
+                break
+        if not in_range:
+            break
+
+    return len(covered_pos), xy[0] * 4000000 + xy[1]
 
 
 def main() -> None:
