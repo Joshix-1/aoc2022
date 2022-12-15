@@ -43,7 +43,7 @@ class Sensor:
     def is_in_range(self, x, y) -> bool:
         return manhattan_dist(self.sensor, (x, y)) <= self.distance
 
-    def just_out_of_range(self, min_: int, max_: int) -> set[tuple[int, int]]:
+    def just_out_of_range(self, min_: int, max_: int) -> "set[tuple[int, int]]":
         dist = self.distance + 1
         x, y = self.sensor
         positions = set()
@@ -56,7 +56,31 @@ class Sensor:
 def start_end_to_set(start_end: "None | tuple[int, int]") -> "set[int]":
     if not start_end:
         return set()
+    return set(range(start_end[0], start_end[1] + 1))
 
+#def pos_in_range(pos: "tuple[int, int]", start, end) -> bool:
+#    return start <= pos[0] <= end and start <= pos[1] <= end
+
+def solve(input_: str) -> "tuple[int | str, int | str]":
+    lines: list[str] = list(filter(None, input_.split("\n")))
+
+    res2 = []
+
+    sensors = [
+        Sensor(line)
+        for line in lines
+    ]
+    covered_pos: "set[int]" = set()
+    y = 10 if "test" in sys.argv else 200_0000
+    for sensor in sensors:
+        print(f"{sensor!s}: {sensor.covered_x(y)}")
+        covered_pos |= start_end_to_set(sensor.covered_x(y))
+
+    for sensor in sensors:
+        if sensor.beacon[1] == y and sensor.beacon[0] in covered_pos:
+            covered_pos.remove(sensor.beacon[0])
+
+    print("1:", len(covered_pos))
     max_pos = 20 if "test" in sys.argv else 4_000_000
     try:
         just_out_of_range = set()
