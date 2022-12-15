@@ -80,8 +80,8 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
                 r = sensor.covered_x_range(y, 0, max_pos)
                 if not r:
                     continue
-                for x in range(r[0], r[1] + 1):
-                    line[x] = x
+                start, end = r[0], r[1] + 1
+                line[start:end] = range(start, end)
             if None in line:
                 print(f"{y}")
                 break
