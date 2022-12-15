@@ -73,20 +73,20 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     max_pos = 20 if "test" in sys.argv else 4_000_000
     try:
         for y in range(0, max_pos + 1):
+            line = [None] * (max_pos + 1)
             if not y % 100_000:
                 print(y)
-            covered = set()
             for sensor in sensors:
-                covered |= start_end_to_set(sensor.covered_x_range(y, 0, max_pos))
-                if len(covered) == max_pos + 1:
-                    break
-            if len(covered) != max_pos + 1:
-                print(f"{y}, {len(covered)}")
+                r = sensor.covered_x_range(y, 0, max_pos)
+                if not r:
+                    continue
+                for x in range(r[0], r[1] + 1):
+                    line[x] = x
+            if None in line:
+                print(f"{y}")
                 break
-        for x in range(max_pos + 1):
-            if x not in covered:
-                res2.append((x, y))
-                break
+        x = line.index(None)
+        res2.append((x, y))
     except:
         print("y=",y)
         raise
