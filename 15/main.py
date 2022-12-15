@@ -11,6 +11,8 @@ class Sensor:
     sensor: "tuple[int, int]"
     beacon: "tuple[int, int]"
     distance: int
+    min_y: int
+    max_y: int
 
     def __init__(self, line: str) -> None:
         """Example: """
@@ -25,54 +27,28 @@ class Sensor:
     def __str__(self):
         return f"S{self.sensor}, dist={self.distance}"
 
-    def covered_pos(self, y: int) -> "set[tuple[int, int]]":
-        covered = set()
+    def covered_x(self, y: int) -> "tuple[int, int] | None":
+        distance_y = abs(y - self.sensor[1])
+        if distance_y > self.distance:
+            return None
+        max_dist_x = self.distance - distance_y
+        # assert max_dist_x >= 0
         x = self.sensor[0]
-        while True:
-            pos = (x, y)
-            distance = manhattan_dist(pos, self.sensor)
-            if distance <= self.distance:
-                covered.add(pos)
-                x += 1
-            else:
-                break
-        x = self.sensor[0] - 1
-        while True:
-            pos = (x, y)
-            distance = manhattan_dist(pos, self.sensor)
-            if distance <= self.distance:
-                covered.add(pos)
-                x -= 1
-            else:
-                break
+        return x - max_dist_x, x + max_dist_x
 
-        return covered
+    def covered_x_range(self, y: int, start: int, end: int) -> "tuple[int, int] | None":
+        pos = self.covered_x(y)
+        if not pos:
+            return None
+        return max(pos[0], start), min(pos[1], end)
 
-    def covered_pos_range(self, y: int, start: int, end: int) -> "set[tuple[int, int]]":
-        covered = set()
-        x = self.sensor[0]
-        while x <= end:
-            pos = (x, y)
-            distance = manhattan_dist(pos, self.sensor)
-            if distance <= self.distance:
-                covered.add(pos)
-                x += 1
-            else:
-                break
-        x = self.sensor[0] - 1
-        while start <= x:
-            pos = (x, y)
-            distance = manhattan_dist(pos, self.sensor)
-            if distance <= self.distance:
-                covered.add(pos)
-                x -= 1
-            else:
-                break
+def start_end_to_set(start_end: "None | tuple[int, int]") -> "set[int]":
+    if not start_end:
+        return set()
+    return set(range(start_end[0], start_end[1] + 1))
 
-        return covered
-
-def pos_in_range(pos: "tuple[int, int]", start, end) -> bool:
-    return start <= pos[0] <= end and start <= pos[1] <= end
+#def pos_in_range(pos: "tuple[int, int]", start, end) -> bool:
+#    return start <= pos[0] <= end and start <= pos[1] <= end
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
     lines: list[str] = list(filter(None, input_.split("\n")))
@@ -83,28 +59,37 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
         Sensor(line)
         for line in lines
     ]
-    covered_pos: "set[tuple[int, int]]" = set()
+    covered_pos: "set[int]" = set()
     y = 10 if "test" in sys.argv else 200_0000
     for sensor in sensors:
-        print(f"{sensor!s}")
-        covered_pos |= sensor.covered_pos(y)
-    max_pos = 20 if "test" in sys.argv else 4_000_000
-    for y in range(0, max_pos + 1):
-        if not y % 100_000:
-            print(y)
-        covered = set()
-        for sensor in sensors:
-            covered |= sensor.covered_pos_range(y, 0, max_pos)
-        if len(covered) != max_pos + 1:
-            print(f"{y}, {len(covered)}")
-            break
-    for x in range(max_pos + 1):
-        if (x, y) not in covered:
-            res2.append((x, y))
-            break
+        print(f"{sensor!s}: {sensor.covered_x(y)}")
+        covered_pos |= start_end_to_set(sensor.covered_x(y))
+
     for sensor in sensors:
-        if sensor.beacon in covered_pos:
-            covered_pos.remove(sensor.beacon)
+        if sensor.beacon[1] == y and sensor.beacon[0] in covered_pos:
+            covered_pos.remove(sensor.beacon[0])
+
+
+    max_pos = 20 if "test" in sys.argv else 4_000_000
+    try:
+        for y in range(0, max_pos + 1):
+            if not y % 100_000:
+                print(y)
+            covered = set()
+            for sensor in sensors:
+                covered |= start_end_to_set(sensor.covered_x_range(y, 0, max_pos))
+                if len(covered) == max_pos + 1:
+                    break
+            if len(covered) != max_pos + 1:
+                print(f"{y}, {len(covered)}")
+                break
+        for x in range(max_pos + 1):
+            if x not in covered:
+                res2.append((x, y))
+                break
+    except:
+        print("y=",y)
+        raise
 
     print(f"{res2}")
     return len(covered_pos), res2[0][0] * 4000000 + res2[0][1]
