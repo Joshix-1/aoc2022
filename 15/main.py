@@ -11,8 +11,6 @@ class Sensor:
     sensor: "tuple[int, int]"
     beacon: "tuple[int, int]"
     distance: int
-    min_y: int
-    max_y: int
 
     def __init__(self, line: str) -> None:
         """Example: """
@@ -42,51 +40,37 @@ class Sensor:
             return None
         return max(pos[0], start), min(pos[1], end)
 
+    def is_in_range(self, x, y) -> bool:
+        return manhattan_dist(self.sensor, (x, y)) <= self.distance
+
+    def just_out_of_range(self, min_: int, max_: int) -> set[tuple[int, int]]:
+        dist = self.distance + 1
+        x, y = self.sensor
+        positions = set()
+        for diff_x in range(-dist, dist + 1):
+            _x, _y = x + diff_x, y + dist - diff_x
+            if min_ <= _x <= max_ and min_ <= _y <= max_:
+                positions.add((_x, _y))
+        return positions
+
 def start_end_to_set(start_end: "None | tuple[int, int]") -> "set[int]":
     if not start_end:
         return set()
-    return set(range(start_end[0], start_end[1] + 1))
-
-#def pos_in_range(pos: "tuple[int, int]", start, end) -> bool:
-#    return start <= pos[0] <= end and start <= pos[1] <= end
-
-def solve(input_: str) -> "tuple[int | str, int | str]":
-    lines: list[str] = list(filter(None, input_.split("\n")))
-
-    res2 = []
-
-    sensors = [
-        Sensor(line)
-        for line in lines
-    ]
-    covered_pos: "set[int]" = set()
-    y = 10 if "test" in sys.argv else 200_0000
-    for sensor in sensors:
-        print(f"{sensor!s}: {sensor.covered_x(y)}")
-        covered_pos |= start_end_to_set(sensor.covered_x(y))
-
-    for sensor in sensors:
-        if sensor.beacon[1] == y and sensor.beacon[0] in covered_pos:
-            covered_pos.remove(sensor.beacon[0])
-
 
     max_pos = 20 if "test" in sys.argv else 4_000_000
     try:
-        for y in range(0, max_pos + 1):
-            line = [None] * (max_pos + 1)
-            if not y % 100_000:
-                print(y)
+        just_out_of_range = set()
+        for sensor in sensors:
+            just_out_of_range |= sensor.just_out_of_range(0, max_pos)
+        print("len just_out_of_range", len(just_out_of_range))
+        for x, y in just_out_of_range:
+            in_range = False
             for sensor in sensors:
-                r = sensor.covered_x_range(y, 0, max_pos)
-                if not r:
-                    continue
-                start, end = r[0], r[1] + 1
-                line[start:end] = range(start, end)
-            if None in line:
-                print(f"{y}")
-                break
-        x = line.index(None)
-        res2.append((x, y))
+                if sensor.is_in_range(x, y):
+                    in_range = True
+                    break
+            if not in_range:
+                res2.append((x, y))
     except:
         print("y=",y)
         raise
