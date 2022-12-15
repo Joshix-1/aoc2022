@@ -55,25 +55,24 @@ class Sensor:
         return
 
 
-def start_end_to_set(start_end: "None | tuple[int, int]") -> "set[int]":
+def start_end_to_iter(start_end: "None | tuple[int, int]") -> "Iterable[int]":
     if not start_end:
-        return set()
-    return set(range(start_end[0], start_end[1] + 1))
+        return ()
+    return range(start_end[0], start_end[1] + 1)
 
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
-    lines: list[str] = list(filter(None, input_.split("\n")))
-
     sensors = [
-        Sensor(line)
-        for line in lines
+        Sensor(line) for line in input_.strip().split("\n")
     ]
-    covered_pos: "set[int]" = set()
-
     y = 10 if "test" in sys.argv else 200_0000
 
-    for sensor in sensors:
-        covered_pos |= start_end_to_set(sensor.covered_x(y))
+    covered_pos: "set[int]" = set(
+        chain.from_iterable(
+            start_end_to_iter(sensor.covered_x(y))
+            for sensor in sensors
+        )
+    )
 
     for sensor in sensors:
         if sensor.beacon[1] == y and sensor.beacon[0] in covered_pos:
@@ -82,19 +81,18 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     print("first done")
 
     max_pos = 20 if "test" in sys.argv else 4_000_000
+
     for xy in chain.from_iterable(
-        sensor.just_out_of_range(0, max_pos) for sensor in sensors
+        sensor.just_out_of_range(0, max_pos)
+        for sensor in sensors
     ):
-        in_range = False
         for sensor in sensors:
             if sensor.is_in_range(xy):
-                in_range = True
                 break
-        if not in_range:
-            break
+        else:
+            return len(covered_pos), xy[0] * 4000000 + xy[1]
 
-    return len(covered_pos), xy[0] * 4000000 + xy[1]
-
+    return len(covered_pos), -1
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
