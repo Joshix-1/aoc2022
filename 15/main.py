@@ -52,7 +52,7 @@ class Sensor:
 def solve(input_: str) -> "tuple[int | str, int | str]":
     lines: list[str] = list(filter(None, input_.split("\n")))
 
-    res1, res2 = 0, 0
+    res2 = []
 
     sensors = [
         Sensor(line)
@@ -61,14 +61,28 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     covered_pos: set[tuple[int, int]] = set()
     y = 200_0000
     for sensor in sensors:
-        print(f"{res1=}, {res2=}, {sensor=!s}")
+        print(f"{sensor=!s}")
         covered_pos |= sensor.covered_pos(y)
+
+    for x in range(4000000 + 1):
+        for y in range(4000000 + 1):
+            covered = False
+            for sensor in sensors:
+                if manhattan_dist((x, y), sensor.sensor) <= sensor.distance:
+                    covered = True
+                    break
+            if not covered:
+                res2.append((x, y))
+                break
+        if res2:
+            break
 
     for sensor in sensors:
         if sensor.beacon in covered_pos:
             covered_pos.remove(sensor.beacon)
 
-    return len(covered_pos), res2
+    print(f"{res2=}")
+    return len(covered_pos), res2[0][0] * 4000000 + res2[0][1]
 
 
 def main() -> None:
