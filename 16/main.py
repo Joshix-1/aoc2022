@@ -35,6 +35,8 @@ class Valve:
         self._next_valves = [parse_name(valve.strip()) for valve in match.group(3).split(",")]
         self.valves = valves
         self.score_cache = {}
+        del match
+        del line
 
     @property
     def next_valves(self) -> "list[Valve]":
@@ -44,15 +46,17 @@ class Valve:
         if time <= 1:
             # print(self.name, already_opened)
             return 0
-        if not self.flow_rate and self.name not in already_opened:
-            # doesn't make sense to open this
-            already_opened = (*already_opened, self.name)
+        if not self.flow_rate and len(self._next_valves) == 1 and time < 30:
+            return 0
+        #if not self.flow_rate and self.name not in already_opened:
+        #    # doesn't make sense to open this
+        #    already_opened = (*already_opened, self.name)
         # already_opened = tuple(sorted(set(already_opened)))
         key = hash((time, already_opened))
         if key in self.score_cache:
             return self.score_cache[key]
         score = 0
-        for open_ in range(1 if self.name in already_opened else 2):
+        for open_ in range(1 if not self.flow_rate or self.name in already_opened else 2):
             _ao = (*already_opened, self.name) if open_ else already_opened
             t = time - 1 if open_ else time
             s = t * self.flow_rate if open_ else 0
@@ -83,7 +87,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-
+    del lines
     res2 = 0
     current_valve = valves[parse_name("AA")]
     res1 = current_valve.get_best_score(30, ())
