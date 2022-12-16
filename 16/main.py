@@ -2,14 +2,14 @@
 import re
 import sys
 
-
-sys.setrecursionlimit(2**10)
+#sys.setrecursionlimit(2**10)
 
 class Valve:
     name: str
     flow_rate: int
-    _next_valves: list[str]
+    _next_valves: "list[str]"
     valves: "dict[str, Valve]"
+    score_cache: "dict"
 
     def __init__(self, line: str, valves: "dict[str, Valve]") -> None:
         match = re.match(
@@ -22,25 +22,39 @@ class Valve:
         self.flow_rate = int(match.group(2))
         self._next_valves = [valve.strip() for valve in match.group(3).split(",")]
         self.valves = valves
+        self.score_cache = {}
 
     @property
     def next_valves(self) -> "list[Valve]":
         return [self.valves[v] for v in self._next_valves]
 
-    def get_best_score(self, time: int, already_visited: tuple[str, ...]) -> int:
-        if not time:
-            return self.flow_rate * time
-        already_visited = (*already_visited, self.name)
-        score = self.flow_rate * time
-        score = max(
-            (score if t == time - 1 else 0) + max(
-                (valve.get_best_score(t - 1, already_visited)
-                 for valve in self.next_valves
-                 if valve.name not in already_visited),
-                default=0
+    def get_best_score(self, time: int, already_opened: "tuple[str, ...]") -> int:
+        if time <= 1:
+            return 0
+        if not self.flow_rate and self.name not in already_opened:
+            # doesn't make sense to open this
+            already_opened = (*already_opened, self.name)
+        already_opened = tuple(sorted(set(already_opened)))
+        key = time, already_opened
+        if key in self.score_cache:
+            return self.score_cache[key]
+        score = 0
+        for open_ in range(1 if self.name in already_opened else 2):
+            _ao = (*already_opened, self.name) if open_ else already_opened
+            t = (time - 1) if open_ else time
+            s = (t * self.flow_rate) if open_ else 0
+            if not t:
+                if s > score:
+                    score = s
+                continue
+            s += max(
+                valve.get_best_score(t - 1, _ao)
+                for valve in self.next_valves
             )
-            for t in (time, time - 1)
-        )
+            if s > score:
+                score = s
+        #print(self.name, time, score, self.flow_rate, s, already_opened)
+        self.score_cache[key] = score
         return score
 
 
