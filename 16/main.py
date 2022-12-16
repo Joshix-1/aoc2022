@@ -34,9 +34,10 @@ class Valve:
         score = self.flow_rate * time
         score = max(
             (score if t == time - 1 else 0) + max(
-                valve.get_best_score(t - 1, already_visited)
-                for valve in self.next_valves
-                if valve not in already_visited
+                (valve.get_best_score(t - 1, already_visited)
+                 for valve in self.next_valves
+                 if valve.name not in already_visited),
+                default=0
             )
             for t in (time, time - 1)
         )
@@ -52,7 +53,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
 
     res2 = 0
     current_valve = valves["AA"]
-    res1 = current_valve.get_best_score(30, set())
+    res1 = current_valve.get_best_score(30, ())
 
     return res1, res2
 
