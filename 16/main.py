@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import re
 import sys
-#import gc
+import gc
 
 #sys.setrecursionlimit(2**10)
 
@@ -87,10 +87,18 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    del lines
     res2 = 0
     current_valve = valves[parse_name("AA")]
     res1 = current_valve.get_best_score(30, ())
+    del valves, current_valve
+    valves: dict[str, Valve] = {}
+    for line in lines:
+        valve = Valve(line, valves)
+        valves[valve.name] = valve
+    me = valves[parse_name("AA")]
+    el = valves[parse_name("AA")]
+
+
 
     return res1, res2
 
