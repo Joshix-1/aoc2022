@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env pypy3
 import re
 import sys
 import gc
@@ -91,6 +91,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     current_valve = valves[parse_name("AA")]
     res1 = current_valve.get_best_score(30, ())
     del valves, current_valve
+    print("- - - - -", res1)
     valves: dict[str, Valve] = {}
     for line in lines:
         valve = Valve(line, valves)
@@ -98,9 +99,43 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     me = valves[parse_name("AA")]
     el = valves[parse_name("AA")]
 
+    not_opened = {v.name for v in valves.values() if v.flow_rate}
+    visited = set()
+    print(not_opened)
+    time = 26
+    score = 0
+    while time > 0 and not_opened:
+        s = 0
+        if me.name in not_opened:
+            print("opening", me.name)
+            s += (time - 1) * me.flow_rate
+            not_opened.remove(me.name)
+        else:
+            print(me.name, "not in", not_opened)
+            for v in me.next_valves:
+                if me.name not in visited:
+                    me = v
+                    visited.add(v)
+                    break
 
+        if el.name in not_opened:
+            print("opening", el.name)
+            s += (time - 1) * el.flow_rate
+            not_opened.remove(el.name)
+        else:
+            print(el.name, "not in", not_opened)
+            for v in el.next_valves:
+                if el.name not in visited:
+                    el = v
+                    visited.add(v)
+                    break
 
-    return res1, res2
+        time -= 1
+        score += s
+
+    print(time, not_opened)
+
+    return res1, score
 
 
 def main() -> None:
