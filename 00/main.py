@@ -1,8 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env pypy3
 import sys
 
 
-def solve(input_: str) -> tuple[int | str, int | str]:
+def solve(input_: str) -> "tuple[int | str, int | str]":
     lines: list[str] = list(filter(None, input_.split("\n")))
 
     res1, res2 = 0, 0
