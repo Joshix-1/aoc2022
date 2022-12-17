@@ -4,17 +4,13 @@ from dataclasses import dataclass
 
 class Shape:
     data: "tuple[str, ...]"
+    height: int
+    width: int
 
     def __init__(self, data: "list[str]") -> None:
         self.data = tuple(data)
-
-    @property
-    def height(self) -> int:
-        return len(self.data)
-
-    @property
-    def width(self) -> int:
-        return len(self.data[0])
+        self.height = len(self.data)
+        self.width = len(self.data[0])
 
 
 SHAPES = [
@@ -62,7 +58,7 @@ class Rock:
         self.x += delta[0]
         self.y += delta[1]
         can_move_down = True
-        for rock in reversed(others):
+        for rock in others:
             assert self is not rock
             if self.collides(rock):
                 can_move_down = False
@@ -95,17 +91,17 @@ class Rock:
         return False
 
 
-def top(rocks: list[Rock]) -> int:
-    return 1 + max(rock.top_most_y for rock in rocks)
-
 def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
-    res2 = 0
     rocks: list[Rock] = []
     jet_idx = 0
+    top_y = 0
     # jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
-    for s in range(2022):
+    for s in range(1000000000000):
+        if s == 2022:
+            res1 = top_y
+            print("1:", res1)
         shape = SHAPES[s % len(SHAPES)]
-        x, y = 2, (top(rocks) + 3) if rocks else 3
+        x, y = 2, top_y + 3
         rock = Rock(shape=shape, x=x, y=y)
 
         # if s == 10:
@@ -119,13 +115,14 @@ def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
             if rock.can_move_down(rocks):
                 rock.y -= 1
             else:
-                print(rock.x, rock.y, "s", rock.shape.width, rock.shape.height, rock.shape.data)
-                rocks.append(rock)
+                if rock.top_most_y >= top_y:
+                    top_y = rock.top_most_y + 1
+                #print(rock.x, rock.y, "s", rock.shape.width, rock.shape.height, rock.shape.data)
+                rocks.insert(0, rock)
                 break
-    res1 = top(rocks)
-    for y in reversed(range(res1)):
-        print("".join(("#" if any(rock.has_piece_at(x, y) for rock in rocks) else ".") for x in range(CAVE_WIDTH)))
-    return res1, res2
+    #for y in reversed(range(top_y)):
+    #    print("".join(("#" if any(rock.has_piece_at(x, y) for rock in rocks) else ".") for x in range(CAVE_WIDTH)))
+    return res1, top_y
 
 
 def main() -> None:
