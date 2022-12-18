@@ -16,7 +16,7 @@ class Direction(Enum):
 class Cube:
     pos: tuple[int, int, int]
     touches_cache: "dict[tuple[int, int, int], Literal[False] | Direction]"
-    _free_surfaces: tuple[Direction, ...]
+    _free_surfaces: tuple[tuple[int, int, int], ...]
 
     def __init__(self, pos: tuple[int, int, int]) -> None:
         self.pos = pos
@@ -35,7 +35,10 @@ class Cube:
     def z(self) -> int:
         return self.pos[2]
 
-    def free_surfaces(self, cubes: "tuple[int, int, int]") -> int:
+    def free_surfaces(
+        self,
+        cubes: "set[tuple[int, int, int]]",
+    ) -> tuple[tuple[int, int, int], ...]:
         if not hasattr(self, "_free_surfaces"):
             free_surfaces = []
             for dir_ in Direction:
@@ -46,40 +49,12 @@ class Cube:
                     if dir_.name[:3] == "NEG"
                     else 1
                 )
-                if tuple(pos) not in cubes:
-                    free_surfaces.append(dir_)
+                pos_tuple = cast(tuple[int, int, int], tuple(pos))
+                if pos_tuple not in cubes:
+                    free_surfaces.append(pos_tuple)
             self._free_surfaces = tuple(free_surfaces)
 
-        return len(self._free_surfaces)
-
-    def touches(self, other: "Cube") -> "Literal[False] | Direction":
-        if other.pos in self.touches_cache:
-            return self.touches_cache[other.pos]
-        dist_x = abs(other.x - self.x)
-        dist_y = abs(other.y - self.y)
-        dist_z = abs(other.z - self.z)
-        if dist_x + dist_y + dist_z > 1:
-            return False
-        direction: "None | Direction" = None
-        if dist_x == 1:
-            if other.x > self.x:
-                direction = Direction.POS_X
-            elif other.x < self.x:
-                direction = Direction.NEG_X
-        if dist_y == 1:
-            if other.y > self.y:
-                return Direction.POS_Y
-            elif other.y < self.y:
-                direction = Direction.NEG_Y
-        if dist_z == 1:
-            if other.z > self.z:
-                return Direction.POS_Z
-            elif other.z < self.z:
-                direction = Direction.NEG_Z
-        if direction is None:
-            raise AssertionError()
-        self.touches_cache[other.pos] = direction
-        return direction
+        return self._free_surfaces
 
     def __repr__(self) -> str:
         return f"Cube({self.pos!r})"
@@ -95,8 +70,23 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     ]
     res1, res2 = 0, 0
     cube_pos: set[tuple[int, int, int]] = {c.pos for c in cubes}
+    free: list[tuple[int, int, int]] = []
     for cube in cubes:
-        res1 += cube.free_surfaces(cube_pos)
+        free_s = cube.free_surfaces(cube_pos)
+        res1 += len(free_s)
+        free.extend(free_s)
+    res2 = res1
+    for pos in set(free):
+        cub_sides = free.count(pos)
+        if cub_sides == 6:
+            res2 -= 6
+            continue
+        free_sides = Cube(pos).free_surfaces(cube_pos)
+        if cub_sides == 5 and len(free_sides) == 1:
+            if 5 == free.count(free_sides[0]):
+                res2 -= 10
+                continue
+
 
     return res1, res2
 
