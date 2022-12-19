@@ -28,7 +28,7 @@ class Blueprint:
             "geode_robot": self.geode_robot,
         })
 
-    def count_geodes(self, time, ore_robots, clay_robots, obsidian_robots, geode_robots, ore, clay, obsidian) -> int:
+    def count_geodes(self, time, ore_robots, clay_robots, obsidian_robots, geode_robots, ore, clay, obsidian, min_time_cache) -> int:
         if time == 0:
             raise AssertionError()
         if time == 1:
@@ -41,19 +41,20 @@ class Blueprint:
         obsidian += obsidian_robots
         time -= 1
         poss_counts = []
-        poss_counts.append(
-            self.count_geodes(time, ore_robots, clay_robots, obsidian_robots, geode_robots, ore, clay, obsidian)
-        )
-        if time > 2 and self.ore_robot["ore"] <= ore - ore_robots:
-            poss_counts.append(self.count_geodes(time, ore_robots + 1, clay_robots, obsidian_robots, geode_robots, ore - self.ore_robot["ore"], clay, obsidian))
-        if time > 2 and self.clay_robot["ore"] <= ore - ore_robots:
-            poss_counts.append(self.count_geodes(time, ore_robots, clay_robots + 1, obsidian_robots, geode_robots, ore - self.clay_robot["ore"], clay, obsidian))
-        if time > 2 and self.obsidian_robot["ore"] <= ore - ore_robots and self.obsidian_robot["clay"] <= clay - clay_robots:
-            poss_counts.append(self.count_geodes(time, ore_robots, clay_robots, obsidian_robots + 1, geode_robots, ore - self.obsidian_robot["ore"], clay - self.obsidian_robot["clay"], obsidian))
         if self.geode_robot["ore"] <= ore - ore_robots and self.geode_robot["obsidian"] <= obsidian - obsidian_robots:
-            poss_counts.append(self.count_geodes(time, ore_robots, clay_robots, obsidian_robots, geode_robots + 1, ore - self.geode_robot["ore"], clay, obsidian - self.geode_robot["obsidian"]))
+            poss_counts.append(self.count_geodes(time, ore_robots, clay_robots, obsidian_robots, geode_robots + 1, ore - self.geode_robot["ore"], clay, obsidian - self.geode_robot["obsidian"], min_time_cache))
+        else:
+            poss_counts.append(
+                self.count_geodes(time, ore_robots, clay_robots, obsidian_robots, geode_robots, ore, clay, obsidian, min_time_cache)
+            )
+            if time > 2 and self.ore_robot["ore"] <= ore - ore_robots:
+                poss_counts.append(self.count_geodes(time, ore_robots + 1, clay_robots, obsidian_robots, geode_robots, ore - self.ore_robot["ore"], clay, obsidian, min_time_cache))
+            if time > 2 and self.clay_robot["ore"] <= ore - ore_robots:
+                poss_counts.append(self.count_geodes(time, ore_robots, clay_robots + 1, obsidian_robots, geode_robots, ore - self.clay_robot["ore"], clay, obsidian, min_time_cache))
+            if time > 2 and self.obsidian_robot["ore"] <= ore - ore_robots and self.obsidian_robot["clay"] <= clay - clay_robots:
+                poss_counts.append(self.count_geodes(time, ore_robots, clay_robots, obsidian_robots + 1, geode_robots, ore - self.obsidian_robot["ore"], clay - self.obsidian_robot["clay"], obsidian, min_time_cache))
         res = max(poss_counts) + geode_robots
-        if time > 4:
+        if time > min_time_cache:
             self.cache[key] = res
         return res
 
@@ -66,13 +67,14 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     for bp in blueprints:
         if bp.id not in {1, 2, 3}:
             continue
-        count = bp.count_geodes(32, 1, 0, 0, 0, 0, 0, 0)
+        count = bp.count_geodes(32, 1, 0, 0, 0, 0, 0, 0, 4)
         res2 *= count
         print(count, repr(bp))
         bp.cache.clear()
+    print("---")
     for bp in blueprints:
         print(f"{res1}, {res2}, {bp}")
-        count = bp.count_geodes(24, 1, 0, 0, 0, 0, 0, 0)
+        count = bp.count_geodes(24, 1, 0, 0, 0, 0, 0, 0, -1)
         res1 += bp.id * count
         bp.cache.clear()
 
