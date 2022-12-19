@@ -53,9 +53,8 @@ class Blueprint:
         if self.geode_robot["ore"] <= ore - ore_robots and self.geode_robot["obsidian"] <= obsidian - obsidian_robots:
             poss_counts.append(self.count_geodes(time, ore_robots, clay_robots, obsidian_robots, geode_robots + 1, ore - self.geode_robot["ore"], clay, obsidian - self.geode_robot["obsidian"]))
         res = max(poss_counts) + geode_robots
-        self.cache[key] = res
-        if time > 20:
-            print(time, res, repr(self))
+        if time > 4:
+            self.cache[key] = res
         return res
 
 
@@ -63,12 +62,20 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     lines: list[str] = list(filter(None, input_.split("\n")))
     blueprints = list(map(Blueprint, lines))
 
-    res1, res2 = 0, 0
-
+    res1, res2 = 0, 1
+    for bp in blueprints:
+        if bp.id not in {1, 2, 3}:
+            continue
+        count = bp.count_geodes(32, 1, 0, 0, 0, 0, 0, 0)
+        res2 *= count
+        print(count, repr(bp))
+        bp.cache.clear()
     for bp in blueprints:
         print(f"{res1}, {res2}, {bp}")
-        res1 += bp.id * bp.count_geodes(24, 1, 0, 0, 0, 0, 0, 0)
+        count = bp.count_geodes(24, 1, 0, 0, 0, 0, 0, 0)
+        res1 += bp.id * count
         bp.cache.clear()
+
     return res1, res2
 
 
