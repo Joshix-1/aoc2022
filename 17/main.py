@@ -124,6 +124,7 @@ def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
     big_num = 1_000_000_000_000
     min_repetition_num = lcm(len(jet_pattern), len(SHAPES))
     top_y_list = []
+    full_row = 0
     for s in range(big_num):
         if s == 2022:
             res1 = top_y
@@ -147,23 +148,23 @@ def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
                 rocks.insert(0, rock)
                 top_y_list.append(top_y)
                 break
-        if s > max(3000, 4 * min_repetition_num):
-            diff1 = top_y_list[s] - top_y_list[s - min_repetition_num]
-            diff2 = top_y_list[s - min_repetition_num] - top_y_list[s - 2 * min_repetition_num]
-            diff3 = top_y_list[s - 3 * min_repetition_num] - top_y_list[s - 4 * min_repetition_num]
-            if any((diff1 == diff2, diff3 == diff2, diff1 == diff3)):
-                print(s, diff1, diff2, diff3)
-            if diff1 == diff2 == diff3:
-                count, rest = divmod(big_num - s, min_repetition_num)
-                if rest:
-                    continue
-                res2 = top_y + count * (diff2 + 1)
-                # + (top_y_list[s - min_repetition_num + rest] - top_y_list[s - min_repetition_num])
-                return res1, res2
+        for y in reversed(range(full_row, top_y)):
+            row = [
+                (x, y) in pieces
+                for x in range(CAVE_WIDTH)
+            ]
+            full = all(row)
+            if not full:
+                continue
+            full_row = y
+            for p in tuple(pieces):
+                if p[1] < full_row:
+                    pieces.remove(p)
+            print("full", full_row)
+            print("pieces", len(pieces))
+            break
 
-    #for y in reversed(range(top_y)):
-    #    print("".join(("#" if any(rock.has_piece_at(x, y) for rock in rocks) else ".") for x in range(CAVE_WIDTH)))
-    return res1, -1
+    return res1, top_y
 
 
 def main() -> None:
