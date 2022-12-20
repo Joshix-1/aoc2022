@@ -2,40 +2,68 @@
 import sys
 
 
+class CycleList:
+
+    def __init__(self, list_):
+        self._list = list_
+
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, idx: int):
+        while idx < 0:
+            idx += len(self._list)
+        idx %= len(self._list)
+        return self._list[idx]
+
+    def __setitem__(self, idx, value):
+        while idx < 0:
+            idx += len(self._list)
+        idx %= len(self._list)
+        self._list[idx] = value
+
+    def index(self, item):
+        return self._list.index(item)
+
+    def swap(self, idx1, idx2):
+        x, y = self[idx1], self[idx2]
+        self[idx1], self[idx2] = y, x
+
 def solve(input_: str) -> "tuple[int | str, int | str]":
     nums: list[int] = list(map(int, filter(None, input_.split("\n"))))
-    nums_with_idx = [(idx, num) for idx, num in enumerate(nums)]
+    nums_with_idx = CycleList([(idx, num) for idx, num in enumerate(nums)])
+    assert len(set(nums_with_idx._list)) == len(nums)
     res2 = 0
-    print([num for _, num in nums_with_idx])
-    for (idx, num) in tuple(nums_with_idx):
+    if len(nums) == 7:
+        print([num for _, num in nums_with_idx._list])
+    for _, (_i, num) in enumerate(tuple(nums_with_idx._list)):
+        assert _i == _
         if num == 0:
+            print("0 does not move:")
+            if len(nums) == 7:
+                print([num for _, num in nums_with_idx._list])
             continue
-        curr_idx = nums_with_idx.index((idx, num))
-        next_idx = (curr_idx + num + len(nums)) % len(nums)
-        if num < 0:
-            next_idx -= 1
-        assert 0 <= curr_idx < len(nums)
+        index = nums_with_idx.index((_i, num))
+        for i in range(abs(num)):
+            sign = num // abs(num)
+            diff = i * sign
+            nums_with_idx.swap(index + diff, index + diff + sign)
 
-        before, after = nums_with_idx[next_idx],  nums_with_idx[(next_idx + 1) % len(nums)]
-        if after == nums_with_idx[curr_idx]:
-            continue
-        val = nums_with_idx.pop(curr_idx)
-        print(val[1], (before[1], after[1]))
-        nums_with_idx.insert(nums_with_idx.index(after), val)
+        #print(f"{val[1]} moves between x and {after[1]}")
         if len(nums) == 7:
-            print([num for _, num in nums_with_idx])
-    assert [num for _, num in nums_with_idx].count(0) == 1
-    zero_idx = [num for _, num in nums_with_idx].index(0)
+            print([num for _, num in nums_with_idx._list])
+    assert [num for _, num in nums_with_idx._list].count(0) == 1
+    zero_idx = [num for _, num in nums_with_idx._list].index(0)
     print(zero_idx, nums_with_idx[zero_idx][1])
     print(
-        ((zero_idx + 1000) % len(nums), nums_with_idx[(zero_idx + 1000) % len(nums)][1]),
-        ((zero_idx + 2000) % len(nums), nums_with_idx[(zero_idx + 2000) % len(nums)][1]),
-        ((zero_idx + 3000) % len(nums), nums_with_idx[(zero_idx + 3000) % len(nums)][1]),
+        ((zero_idx + 1000) % len(nums), nums_with_idx[(zero_idx + 1000)][1]),
+        ((zero_idx + 2000) % len(nums), nums_with_idx[(zero_idx + 2000)][1]),
+        ((zero_idx + 3000) % len(nums), nums_with_idx[(zero_idx + 3000)][1]),
     )
     res1 = (
-        nums_with_idx[(zero_idx + 1000) % len(nums)][1]
-        + nums_with_idx[(zero_idx + 2000) % len(nums)][1]
-        + nums_with_idx[(zero_idx + 3000) % len(nums)][1]
+        nums_with_idx[(zero_idx + 1000)][1]
+        + nums_with_idx[(zero_idx + 2000)][1]
+        + nums_with_idx[(zero_idx + 3000)][1]
     )
     return res1, res2
 
