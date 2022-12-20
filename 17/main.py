@@ -97,7 +97,6 @@ class Rock:
 
 
 def solve(jet_pattern: str) -> "tuple[int, int]":
-    rocks: list[Rock] = []
     jet_idx = 0
     top_y = 0
     pieces: set[tuple[int, int]] = set()
@@ -119,7 +118,6 @@ def solve(jet_pattern: str) -> "tuple[int, int]":
                 if rock.top_most_y >= top_y:
                     top_y = rock.top_most_y + 1
                 pieces.update(rock.pieces)
-                rocks.insert(0, rock)
                 break
 
     return res1, top_y
