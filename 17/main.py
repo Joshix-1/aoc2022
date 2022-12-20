@@ -96,7 +96,7 @@ class Rock:
         return False
 
 
-def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
+def solve(jet_pattern: str) -> "tuple[int, int]":
     rocks: list[Rock] = []
     jet_idx = 0
     top_y = 0
