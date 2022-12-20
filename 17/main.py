@@ -1,8 +1,6 @@
 #!/usr/bin/env pypy3
-import statistics
 import sys
 from dataclasses import dataclass
-from fractions import Fraction
 
 class Shape:
 
@@ -115,7 +113,6 @@ def solve(jet_pattern: str) -> "tuple[int, int]":
     # jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>" * 11
     top_y_values = []
     count = lcm(len(SHAPES), len(jet_pattern))
-    print(divmod(1000000000000, count))
     for s in range(count * 6 + (1000000000000 % count) + 1):  # 0_000_000
         shape = SHAPES[s % len(SHAPES)]
         x, y = 2, top_y + 3
@@ -139,20 +136,16 @@ def solve(jet_pattern: str) -> "tuple[int, int]":
         v - top_y_values[i - 1]
         for i, v in enumerate(top_y_values[1:], 1)
     ]
-    print("".join(map(str, seq)))
-    print("---")
     seq_str = "".join(map(str, seq))
     sub_seq = []
     for _ in range(5, len(seq) // 2):
         sub_str = seq_str[-_:]
         div, mod = divmod(len(seq_str), len(sub_str))
         if seq_str[mod:].count(sub_str) == div:
-            print(sub_str)
             sub_seq = list(map(int, sub_str))
             break
     div, mod = divmod((1000000000000 - s - 1), len(sub_seq))
     res2 = top_y + sum(sub_seq) * div + sum(sub_seq[:mod])
-    print("diff", res2 - 1514285714288)
     return top_y_values[2021], res2
 
 
