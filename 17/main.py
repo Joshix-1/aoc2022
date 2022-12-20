@@ -2,10 +2,8 @@
 import sys
 from dataclasses import dataclass
 
+
 class Shape:
-    # data: "tuple[str, ...]"
-    # height: int
-    # width: int
 
     def __init__(self, data: "list[str]") -> None:
         self.data = tuple(data)
@@ -31,17 +29,12 @@ class Rock:
 
     @property
     def pieces(self) -> "tuple[tuple[int, int], ...]":
-        if hasattr(self, "_pieces"):
-            return self._pieces
         pieces: list[tuple[int, int]] = []
         for y in range(self.y, self.top_most_y + 1):
             for x in range(self.x, self.right_most_x + 1):
                 if self.has_piece_at(x, y):
                     pieces.append((x, y))
         return tuple(pieces)
-
-    def fix(self):
-        self._pieces = self.pieces
 
     @property
     def top_most_y(self) -> int:
@@ -51,23 +44,23 @@ class Rock:
     def right_most_x(self) -> int:
         return self.x + self.shape.width - 1
 
-    def move_x(self, dx: int, others: "list[Rock]", pieces: set[tuple[int, int]]) -> None:
+    def move_x(self, dx: int, pieces: set[tuple[int, int]]) -> None:
         if dx > 0 and self.right_most_x + 1 == CAVE_WIDTH:
             return
         if dx < 0 and self.x == 0:
             return
-        if not self.can_move(others, (dx, 0), pieces):
+        if not self.can_move((dx, 0), pieces):
             return
         self.x += dx
         assert 0 <= self.x <= self.right_most_x
 
-    def can_move_down(self, others: "list[Rock]", pieces: set[tuple[int, int]]) -> bool:
+    def can_move_down(self, pieces: set[tuple[int, int]]) -> bool:
         if self.y == 0:
             return False
-        return self.can_move(others, (0, -1), pieces)
+        return self.can_move((0, -1), pieces)
 
-    def can_move(self, others: "list[Rock]", delta: tuple[int, int], pieces: set[tuple[int, int]]) -> bool:
-        if not others:
+    def can_move(self, delta: tuple[int, int], pieces: set[tuple[int, int]]) -> bool:
+        if not pieces:
             return True
         self.x += delta[0]
         self.y += delta[1]
@@ -103,29 +96,12 @@ class Rock:
         return False
 
 
-def gcd(a: int, b: int) -> int:
-    """greatest common divisor"""
-    if b == 0:
-        return a
-    return gcd(b, a % b)
-
-
-def lcm(x: int, y: int) -> int:
-    """least common multiple"""
-    return x * y // gcd(x, y)
-
-
 def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
     rocks: list[Rock] = []
     jet_idx = 0
     top_y = 0
-    jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
     pieces: set[tuple[int, int]] = set()
-    big_num = 1_000_000_000_000
-    min_repetition_num = lcm(len(jet_pattern), len(SHAPES))
-    top_y_list = []
-    full_row = 0
-    for s in range(big_num):
+    for s in range(1_000_000_000_000):
         if s == 2022:
             res1 = top_y
             print(2022, res1)
@@ -135,34 +111,16 @@ def solve(jet_pattern: str) -> "tuple[int | str, int | str]":
 
         while True:
             assert jet_pattern[jet_idx] in "<>" or print(jet_pattern[jet_idx])
-            rock.move_x(-1 if jet_pattern[jet_idx] == "<" else 1, rocks, pieces)
+            rock.move_x(-1 if jet_pattern[jet_idx] == "<" else 1, pieces)
             jet_idx = (jet_idx + 1) % len(jet_pattern)
-            if rock.can_move_down(rocks, pieces):
+            if rock.can_move_down(pieces):
                 rock.y -= 1
             else:
                 if rock.top_most_y >= top_y:
                     top_y = rock.top_most_y + 1
-                #print(rock.x, rock.y, "s", rock.shape.width, rock.shape.height, rock.shape.data)
-                rock.fix()
                 pieces.update(rock.pieces)
                 rocks.insert(0, rock)
-                top_y_list.append(top_y)
                 break
-        for y in reversed(range(full_row, top_y)):
-            row = [
-                (x, y) in pieces
-                for x in range(CAVE_WIDTH)
-            ]
-            full = all(row)
-            if not full:
-                continue
-            full_row = y
-            for p in tuple(pieces):
-                if p[1] < full_row:
-                    pieces.remove(p)
-            print("full", full_row)
-            print("pieces", len(pieces))
-            break
 
     return res1, top_y
 
