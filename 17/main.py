@@ -1,7 +1,8 @@
 #!/usr/bin/env pypy3
+import statistics
 import sys
 from dataclasses import dataclass
-
+from fractions import Fraction
 
 class Shape:
 
@@ -95,15 +96,27 @@ class Rock:
                 return True
         return False
 
+def gcd(a: int, b: int) -> int:
+    """greatest common divisor"""
+    if b == 0:
+        return a
+    return gcd(b, a % b)
+
+
+def lcm(x: int, y: int) -> int:
+    """least common multiple"""
+    return x * y // gcd(x, y)
+
 
 def solve(jet_pattern: str) -> "tuple[int, int]":
     jet_idx = 0
     top_y = 0
     pieces: set[tuple[int, int]] = set()
-    for s in range(1_000_000_000_000):
-        if s == 2022:
-            res1 = top_y
-            print(2022, res1)
+    # jet_pattern = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>" * 11
+    top_y_values = []
+    count = lcm(len(SHAPES), len(jet_pattern))
+    print(divmod(1000000000000, count))
+    for s in range(count * 6 + (1000000000000 % count) + 1):  # 0_000_000
         shape = SHAPES[s % len(SHAPES)]
         x, y = 2, top_y + 3
         rock = Rock(shape=shape, x=x, y=y)
@@ -120,7 +133,27 @@ def solve(jet_pattern: str) -> "tuple[int, int]":
                 pieces.update(rock.pieces)
                 break
 
-    return res1, top_y
+        top_y_values.append(top_y)
+
+    seq = [
+        v - top_y_values[i - 1]
+        for i, v in enumerate(top_y_values[1:], 1)
+    ]
+    print("".join(map(str, seq)))
+    print("---")
+    seq_str = "".join(map(str, seq))
+    sub_seq = []
+    for _ in range(5, len(seq) // 2):
+        sub_str = seq_str[-_:]
+        div, mod = divmod(len(seq_str), len(sub_str))
+        if seq_str[mod:].count(sub_str) == div:
+            print(sub_str)
+            sub_seq = list(map(int, sub_str))
+            break
+    div, mod = divmod((1000000000000 - s - 1), len(sub_seq))
+    res2 = top_y + sum(sub_seq) * div + sum(sub_seq[:mod])
+    print("diff", res2 - 1514285714288)
+    return top_y_values[2021], res2
 
 
 def main() -> None:
