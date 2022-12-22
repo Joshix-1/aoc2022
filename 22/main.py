@@ -64,79 +64,79 @@ def solve2(input_: str) -> "int":
     print(cube_net)
     assert cube_net == ".##\n.#.\n##.\n#..", "sorry, I can't help you today"
     assert cube_size == 50, "test input doesn't work :("
-
-    bounds_mapping: "dict[tuple[int, int], tuple[str, tuple[int, int]]]" = {}
+    return
+    bounds_mapping: "dict[tuple[str, tuple[int, int]], tuple[str, tuple[int, int]]]" = {}
     for i in range(50):
         """.v#
            .#.
            ##.
            <.."""
-        bounds_mapping[(-1, 150 + i)] = ("v", (50 + i, 0))
+        bounds_mapping[("<", (-1, 150 + i))] = ("v", (50 + i, 0))
         """.^#
            .#.
            ##.
            >.."""
-        bounds_mapping[(50 + i, -1)] = (">", (0, 150 + i))
+        bounds_mapping[("^", (50 + i, -1))] = (">", (0, 150 + i))
         """.#v
            .#.
            ##.
            v.."""
-        bounds_mapping[(i, 200)] = ("v", (50 + i, 0))
+        bounds_mapping[("v", (i, 200))] = ("v", (100 + i, 0))
         """.#^
            .#.
            ##.
            ^.."""
-        bounds_mapping[(100 + i, -1)] = ("^", (i, 199))
+        bounds_mapping[("^", (100 + i, -1))] = ("^", (i, 199))
         """.##
            .>.
            ^#.
            #.."""
-        bounds_mapping[(i, 99)] = (">", (50, 99 - i))
+        bounds_mapping[("^", (i, 99))] = (">", (50, 50 + i))
         """.##
            .<.
            v#.
            #.."""
-        bounds_mapping[(49, 99 - i)] = ("v", (i, 100))
+        bounds_mapping[("<", (49, 50 + i))] = ("v", (i, 100))
         """.>#
            .#.
            <#.
            #.."""
-        bounds_mapping[(-1, 100 + i)] = (">", (50, 49 - i))
+        bounds_mapping[("<", (-1, 100 + i))] = (">", (50, 49 - i))
         """.<#
            .#.
            >#.
            #.."""
-        bounds_mapping[(49, i)] = (">", (0, 149 - i))
+        bounds_mapping[("<", (49, i))] = (">", (0, 149 - i))
         """.#>
            .#.
            #<.
            #.."""
-        bounds_mapping[(150, i)] = ("<", (99, 149 - i))
+        bounds_mapping[(">", (150, i))] = ("<", (99, 149 - i))
         """.#<
            .#.
            #>.
            #.."""
-        bounds_mapping[(100, 100 + i)] = ("<", (149, 49 - i))
+        bounds_mapping[(">", (100, 100 + i))] = ("<", (149, 49 - i))
         """.#v
            .<.
            ##.
            #.."""
-        bounds_mapping[(100 + i, 50)] = ("<", (99, 50 + i))
+        bounds_mapping[("v", (100 + i, 50))] = ("<", (99, 50 + i))
         """.#^
            .>.
            ##.
            #.."""
-        bounds_mapping[(100, 50 + i)] = ("^", (100 + i, 49))
+        bounds_mapping[(">", (100, 50 + i))] = ("^", (100 + i, 49))
         """.##
            .#.
            #v.
            <.."""
-        bounds_mapping[(50 + i, 150)] = ("<", (49, 150 + i))
+        bounds_mapping[("v", (50 + i, 150))] = ("<", (49, 150 + i))
         """.##
            .#.
            #^.
            >.."""
-        bounds_mapping[(50, 150 + i)] = ("^", (50 + i, 149))
+        bounds_mapping[(">", (50, 150 + i))] = ("^", (50 + i, 149))
 
     for instruction in path:
         print(f"{pos}, {facing}, {instruction}")
@@ -148,19 +148,24 @@ def solve2(input_: str) -> "int":
             print(x, y, FACING[facing])
             if FACING[facing] in {"^", "v"}:
                 if y < 0 or y >= len(lines) or lines[y][x] == " ":
-                    dir_, (x, y) = bounds_mapping[(x, y)]
+                    dir_, (x, y) = bounds_mapping[(FACING[facing], (x, y))]
                     facing = FACING_REVERSE[dir_]
+                else:
+                    assert (x, y) not in bounds_mapping
             elif FACING[facing] in {">", "<"}:
                 if x < 0 or x >= len(lines[y]) or lines[y][x] == " ":
-                    dir_, (x, y) = bounds_mapping[(x, y)]
+                    dir_, (x, y) = bounds_mapping[(FACING[facing], (x, y))]
                     facing = FACING_REVERSE[dir_]
+                else:
+                    assert (x, y) not in bounds_mapping
             else:
                 raise AssertionError()
+            assert move(pos, facing) != pos and bounds_mapping.get((FACING[facing], move(pos, facing))) != pos
             if lines[y][x] in {".", "<", ">", "v", "^"}:
                 lines[pos[1]][pos[0]] = FACING[facing]
                 pos = x, y
             elif lines[y][x] == "#":
-                break
+                print("###", x, y)
             else:
                 raise AssertionError()
     lines[pos[1]][pos[0]] = "o"
