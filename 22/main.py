@@ -45,12 +45,98 @@ def solve2(input_: str) -> "int":
         if len(line) < width:
             line.extend([" "] * (width - len(line)))
 
-    # print("\n".join(["".join(line) for line in lines]))
     height = len(lines)
-    res2 = 0
 
     facing = 0
     pos: "tuple[int, int]" = (lines[0].index("."), 0)
+
+    cube_grid = []
+    for y in range(len(lines), step=cube_size):
+        line = []
+        cube_grid.append(line)
+        for x in range(len(lines[y]), step=cube_size):
+            line.append(lines[y][x] != " ")
+    cube_net = "\n".join(
+        ("".join([("#" if l else ".") for l in line]))
+        for line in cube_grid
+    )
+    print("net:")
+    print(cube_net)
+    assert cube_net == ".##\n.#.\n##.\n#..", "sorry, I can't help you today"
+    assert cube_size == 50, "test input doesn't work :("
+
+    bounds_mapping: "dict[tuple[int, int], tuple[str, tuple[int, int]]]" = {}
+    for i in range(50):
+        """.v#
+           .#.
+           ##.
+           <.."""
+        bounds_mapping[(-1, 150 + i)] = ("v", (50 + i, 0))
+        """.^#
+           .#.
+           ##.
+           >.."""
+        bounds_mapping[(50 + i, -1)] = (">", (0, 150 + i))
+        """.#v
+           .#.
+           ##.
+           v.."""
+        bounds_mapping[(i, 200)] = ("v", (50 + i, 0))
+        """.#^
+           .#.
+           ##.
+           ^.."""
+        bounds_mapping[(100 + i, -1)] = ("^", (i, 199))
+        """.##
+           .>.
+           ^#.
+           #.."""
+        bounds_mapping[(i, 99)] = (">", (50, 99 - i))
+        """.##
+           .<.
+           v#.
+           #.."""
+        bounds_mapping[(49, 99 - i)] = ("v", (i, 100))
+        """.>#
+           .#.
+           <#.
+           #.."""
+        bounds_mapping[(-1, 100 + i)] = (">", (50, 49 - i))
+        """.<#
+           .#.
+           >#.
+           #.."""
+        bounds_mapping[(49, i)] = (">", (0, 149 - i))
+        """.#>
+           .#.
+           #<.
+           #.."""
+        bounds_mapping[(150, i)] = ("<", (99, 149 - i))
+        """.#<
+           .#.
+           #>.
+           #.."""
+        bounds_mapping[(100, 100 + i)] = ("<", (149, 49 - i))
+        """.#v
+           .<.
+           ##.
+           #.."""
+        bounds_mapping[(100 + i, 50)] = ("<", (99, 50 + i))
+        """.#^
+           .>.
+           ##.
+           #.."""
+        bounds_mapping[(100, 50 + i)] = ("^", (100 + i, 49))
+        """.##
+           .#.
+           #v.
+           <.."""
+        bounds_mapping[(50 + i, 150)] = ("<", (49, 150 + i))
+        """.##
+           .#.
+           #^.
+           >.."""
+        bounds_mapping[(50, 150 + i)] = ("^", (50 + i, 149))
 
     for instruction in path:
         print(f"{pos}, {facing}, {instruction}")
@@ -62,69 +148,12 @@ def solve2(input_: str) -> "int":
             print(x, y, FACING[facing])
             if FACING[facing] in {"^", "v"}:
                 if y < 0 or y >= len(lines) or lines[y][x] == " ":
-                    if FACING[facing] == "^":
-                        if x < 50:
-                            # diagonally up
-                            y += 50 - x
-                            x = 50
-                            facing = FACING_REVERSE[">"]
-                        elif x < 100:
-                            y = x + 100
-                            x = 0
-                            facing = FACING_REVERSE[">"]
-                        else:
-                            y = height - 1
-                            x -= 100
-                            facing = FACING_REVERSE["^"]
-                    else:
-                        if x < 50:
-                            x += 100
-                            y = 0
-                            facing = FACING_REVERSE["v"]
-                        elif x < 100:
-                            y += x - 50
-                            x = 50 -1
-                            facing = FACING_REVERSE["<"]
-                        elif x < 150:
-                            y += x - 100
-                            x = 100 - 1
-                            facing = FACING_REVERSE["<"]
+                    dir_, (x, y) = bounds_mapping[(x, y)]
+                    facing = FACING_REVERSE[dir_]
             elif FACING[facing] in {">", "<"}:
                 if x < 0 or x >= len(lines[y]) or lines[y][x] == " ":
-                    if FACING[facing] == ">":
-                        if y < 50:
-                            y += 100
-                            x = 100 - 1
-                            facing = FACING_REVERSE["<"]
-                        elif y < 100:
-                            x += y - 50
-                            y = 50 - 1
-                            facing = FACING_REVERSE["^"]
-                        elif y < 150:
-                            y -= 100
-                            x = 150 - 1
-                            facing = FACING_REVERSE["<"]
-                        elif y < 200:
-                            x += y - 150
-                            y = 150 - 1
-                            facing = FACING_REVERSE["^"]
-                    else:
-                        if y < 50:
-                            y = 150 - y
-                            x = 0
-                            facing = FACING_REVERSE[">"]
-                        elif y < 100:
-                            x = 50 + (y - 100)
-                            y = 100
-                            facing = FACING_REVERSE["v"]
-                        elif y < 150:
-                            y -= 100
-                            x = 50
-                            facing = FACING_REVERSE[">"]
-                        elif y < 200:
-                            x = y - 100
-                            y = 0
-                            facing = FACING_REVERSE["v"]
+                    dir_, (x, y) = bounds_mapping[(x, y)]
+                    facing = FACING_REVERSE[dir_]
             else:
                 raise AssertionError()
             if lines[y][x] in {".", "<", ">", "v", "^"}:
@@ -200,7 +229,9 @@ def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
         in_ = sys.stdin.read()
-        res1, res2 = solve1(in_), solve2(in_)
+        res1 = solve1(in_)
+        print("----")
+        res2 = solve2(in_)
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
