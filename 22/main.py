@@ -29,7 +29,52 @@ def move(pos: "tuple[int, int]", facing: int) -> "tuple[int, int]":
         return x, y - 1
     raise ValueError("facing is " + str(facing))
 
-def solve(input_: str) -> "tuple[int | str, int | str]":
+def solve2(input_: str) -> "int":
+    lines: "list[list[str]]" = list(map(list, filter(None, input_.split("\n"))))
+    path = re.split(r"(?<=\d)(?=\D)|(?=\d)(?<=\D)", "".join(lines[-1]))
+    lines = lines[:-1]
+    cube_size = min(len("".join(line).strip()) for line in lines)
+    assert cube_size in {50, 4}
+    width = max(map(len, lines))
+    for line in lines:
+        if len(line) < width:
+            line.extend([" "] * (width - len(line)))
+    # print("\n".join(["".join(line) for line in lines]))
+    height = len(lines)
+    res2 = 0
+
+    facing = 0
+    pos: "tuple[int, int]" = (lines[0].index("."), 0)
+
+    for instruction in path:
+        print(f"{pos}, {facing}, {instruction}")
+        if instruction in {"L", "R"}:
+            facing = rotate(facing, instruction)
+            continue
+        for _ in range(int(instruction)):
+            x, y = move(pos, facing)
+            # print(x, y)
+            if FACING[facing] in {"^", "v"}:
+                if y < 0 or y >= len(lines) or lines[y][x] == " ":
+                    pass # TODO: cube wrapping
+            elif FACING[facing] in {">", "<"}:
+                if x < 0 or x >= len(lines[y]) or lines[y][x] == " ":
+                    pass # TODO: cube wrapping
+            else:
+                raise AssertionError()
+            if lines[y][x] in {".", "<", ">", "v", "^"}:
+                lines[pos[1]][pos[0]] = FACING[facing]
+                pos = x, y
+            elif lines[y][x] == "#":
+                break
+            else:
+                raise AssertionError()
+    lines[pos[1]][pos[0]] = "o"
+    print("\n".join(["".join(line) for line in lines]))
+    print(pos, facing, FACING[facing])
+    return 1000 * (pos[1] + 1) + 4 * (pos[0] + 1) + facing
+
+def solve1(input_: str) -> "int":
     lines: "list[list[str]]" = list(map(list, filter(None, input_.split("\n"))))
     path = re.split(r"(?<=\d)(?=\D)|(?=\d)(?<=\D)", "".join(lines[-1]))
     lines = lines[:-1]
@@ -80,16 +125,17 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
                 break
             else:
                 raise AssertionError()
+    lines[pos[1]][pos[0]] = "o"
     print("\n".join(["".join(line) for line in lines]))
     print(pos, facing, FACING[facing])
-    res1 = 1000 * (pos[1] + 1) + 4 * (pos[0] + 1) + facing
-    return res1, res2
+    return 1000 * (pos[1] + 1) + 4 * (pos[0] + 1) + facing
 
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
-        res1, res2 = solve(sys.stdin.read())
+        in_ = sys.stdin.read()
+        res1, res2 = solve1(in_), solve2(in_)
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
