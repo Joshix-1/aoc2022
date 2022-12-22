@@ -8,7 +8,12 @@ FACING = {
     2: "<",
     3: "^",
 }
-
+FACING_REVERSE = {
+    value: key
+    for key, value in FACING.items()
+}
+FACING_REVERSED = FACING_REVERSE
+print(FACING_REVERSED)
 
 def rotate(facing: int, rot) -> int:
     if rot == "R":
@@ -39,6 +44,7 @@ def solve2(input_: str) -> "int":
     for line in lines:
         if len(line) < width:
             line.extend([" "] * (width - len(line)))
+
     # print("\n".join(["".join(line) for line in lines]))
     height = len(lines)
     res2 = 0
@@ -53,13 +59,72 @@ def solve2(input_: str) -> "int":
             continue
         for _ in range(int(instruction)):
             x, y = move(pos, facing)
-            # print(x, y)
+            print(x, y, FACING[facing])
             if FACING[facing] in {"^", "v"}:
                 if y < 0 or y >= len(lines) or lines[y][x] == " ":
-                    pass # TODO: cube wrapping
+                    if FACING[facing] == "^":
+                        if x < 50:
+                            # diagonally up
+                            y += 50 - x
+                            x = 50
+                            facing = FACING_REVERSE[">"]
+                        elif x < 100:
+                            y = x + 100
+                            x = 0
+                            facing = FACING_REVERSE[">"]
+                        else:
+                            y = height - 1
+                            x -= 100
+                            facing = FACING_REVERSE["^"]
+                    else:
+                        if x < 50:
+                            x += 100
+                            y = 0
+                            facing = FACING_REVERSE["v"]
+                        elif x < 100:
+                            y += x - 50
+                            x = 50 -1
+                            facing = FACING_REVERSE["<"]
+                        elif x < 150:
+                            y += x - 100
+                            x = 100 - 1
+                            facing = FACING_REVERSE["<"]
             elif FACING[facing] in {">", "<"}:
                 if x < 0 or x >= len(lines[y]) or lines[y][x] == " ":
-                    pass # TODO: cube wrapping
+                    if FACING[facing] == ">":
+                        if y < 50:
+                            y += 100
+                            x = 100 - 1
+                            facing = FACING_REVERSE["<"]
+                        elif y < 100:
+                            x += y - 50
+                            y = 50 - 1
+                            facing = FACING_REVERSE["^"]
+                        elif y < 150:
+                            y -= 100
+                            x = 150 - 1
+                            facing = FACING_REVERSE["<"]
+                        elif y < 200:
+                            x += y - 150
+                            y = 150 - 1
+                            facing = FACING_REVERSE["^"]
+                    else:
+                        if y < 50:
+                            y = 150 - y
+                            x = 0
+                            facing = FACING_REVERSE[">"]
+                        elif y < 100:
+                            x = 50 + (y - 100)
+                            y = 100
+                            facing = FACING_REVERSE["v"]
+                        elif y < 150:
+                            y -= 100
+                            x = 50
+                            facing = FACING_REVERSE[">"]
+                        elif y < 200:
+                            x = y - 100
+                            y = 0
+                            facing = FACING_REVERSE["v"]
             else:
                 raise AssertionError()
             if lines[y][x] in {".", "<", ">", "v", "^"}:
