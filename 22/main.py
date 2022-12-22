@@ -17,7 +17,7 @@ def rotate(facing: int, rot) -> int:
         return (facing - 1 + 4) % 4
     raise ValueError("rot is " + str(rot))
 
-def move(pos: tuple[int, int], facing: int) -> tuple[int, int]:
+def move(pos: "tuple[int, int]", facing: int) -> "tuple[int, int]":
     x, y = pos
     if facing == 0:
         return x + 1, y
@@ -30,40 +30,59 @@ def move(pos: tuple[int, int], facing: int) -> tuple[int, int]:
     raise ValueError("facing is " + str(facing))
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
-    lines: list[list[str]] = list(map(list, filter(None, input_.split("\n"))))
+    lines: "list[list[str]]" = list(map(list, filter(None, input_.split("\n"))))
     path = re.split(r"(?<=\d)(?=\D)|(?=\d)(?<=\D)", "".join(lines[-1]))
     lines = lines[:-1]
+    width = max(map(len, lines))
+    for line in lines:
+        if len(line) < width:
+            line.extend([" "] * (width - len(line)))
+    # print("\n".join(["".join(line) for line in lines]))
+    height = len(lines)
     res2 = 0
 
     facing = 0
-    pos: tuple[int, int] = (0, lines[0].index("."))
+    pos: "tuple[int, int]" = (lines[0].index("."), 0)
 
     for instruction in path:
-        print(f"{pos=}, {facing=}, {instruction=}")
+        print(f"{pos}, {facing}, {instruction}")
         if instruction in {"L", "R"}:
             facing = rotate(facing, instruction)
             continue
         for _ in range(int(instruction)):
             x, y = move(pos, facing)
-            if FACING[facing] in {"<", ">"}:
+            # print(x, y)
+            c = 0
+            if FACING[facing] in {"^", "v"}:
                 while y < 0 or y >= len(lines) or lines[y][x] == " ":
-                    x, y = move(pos, facing)
+                    x, y = move((x, y), facing)
                     y = (y + len(lines)) % len(lines)
-                assert y == pos[1]
-            elif FACING[facing] in {"v", "^"}:
+                    # print(f"  y={y}")
+                    assert x == pos[0]
+                    c +=1
+                    if c > len(lines):
+                        raise AssertionError(pos, FACING[facing], x, y)
+            elif FACING[facing] in {">", "<"}:
                 while x < 0 or x >= len(lines[y]) or lines[y][x] == " ":
-                    x, y = move(pos, facing)
-                    x = (x + len(lines[x])) % len(lines[x])
-                assert x == pos[0]
-            if lines[y][x] == ".":
+                    x, y = move((x, y), facing)
+                    x = (x + len(lines[y])) % len(lines[y])
+                    # print(f"  x={x}")
+                    assert y == pos[1]
+                    c += 1
+                    if c > len(lines[y]):
+                        raise AssertionError(f'{pos} {facing}={FACING[facing]}, {x}, {y}, {"".join(lines[y])}')
+            else:
+                raise AssertionError()
+            if lines[y][x] in {".", "<", ">", "v", "^"}:
+                lines[pos[1]][pos[0]] = FACING[facing]
                 pos = x, y
             elif lines[y][x] == "#":
                 break
             else:
                 raise AssertionError()
-
-
-    res1 = 1000 * (pos[0] + 1) + 8 * (pos[1] + 1) + facing
+    print("\n".join(["".join(line) for line in lines]))
+    print(pos, facing, FACING[facing])
+    res1 = 1000 * (pos[1] + 1) + 4 * (pos[0] + 1) + facing
     return res1, res2
 
 
