@@ -57,6 +57,10 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
                 assert x == pos[0]
             if lines[y][x] == ".":
                 pos = x, y
+            elif lines[y][x] == "#":
+                break
+            else:
+                raise AssertionError()
 
 
     res1 = 1000 * (pos[0] + 1) + 8 * (pos[1] + 1) + facing
