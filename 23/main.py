@@ -43,7 +43,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     res2 = -1
     elves_count = len(elves)
     moves = [check_north, check_south, check_west, check_east]
-    for _ in range(10):
+    for round_ in range(10):
         moves_proposed: dict[tuple[int, int], tuple[int, int]] = {}
         for x, y in elves:
             # If no other Elves are in one of those eight positions, the Elf does not do anything during this round.
@@ -57,13 +57,13 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
         moves.append(moves.pop(0))
         destinations = list(moves_proposed.values())
         if not moves_proposed:
-            res2 = _ + 1
+            res2 = round_ + 1
         for from_, to in moves_proposed.items():
             print(from_, to)
             if destinations.count(to) == 1:
                 elves.add(to)
                 elves.remove(from_)
-        print("---- " + str(_))
+        print("---- " + str(round_))
         print_elves(elves)
         assert elves_count == len(elves)
     min_x = min([x for x, _ in elves])
@@ -74,7 +74,28 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     print("rect", (max_x - min_x + 1) * (max_y - min_y + 1))
     print("elves", len(elves))
     empty_ground_tiles = (max_x - min_x + 1) * (max_y - min_y + 1) - len(elves)
-
+    while res2 == -1:
+        round_ += 1
+        moves_proposed: dict[tuple[int, int], tuple[int, int]] = {}
+        for x, y in elves:
+            # If no other Elves are in one of those eight positions, the Elf does not do anything during this round.
+            if all(bool(check(elves, x=x, y=y)) for check in moves):
+                continue
+            for check in moves:
+                if pos := check(elves, x=x, y=y):
+                    assert pos not in elves
+                    moves_proposed[(x, y)] = pos
+                    break
+        moves.append(moves.pop(0))
+        destinations = list(moves_proposed.values())
+        if not moves_proposed:
+            res2 = round_ + 1
+            break
+        for from_, to in moves_proposed.items():
+            if destinations.count(to) == 1:
+                elves.add(to)
+                elves.remove(from_)
+        assert elves_count == len(elves)
     return empty_ground_tiles, res2
 
 
