@@ -64,7 +64,6 @@ def solve2(input_: str) -> "int":
     print(cube_net)
     assert cube_net == ".##\n.#.\n##.\n#..", "sorry, I can't help you today"
     assert cube_size == 50, "test input doesn't work :("
-    return
     bounds_mapping: "dict[tuple[str, tuple[int, int]], tuple[str, tuple[int, int]]]" = {}
     for i in range(50):
         """.v#
@@ -138,6 +137,12 @@ def solve2(input_: str) -> "int":
            >.."""
         bounds_mapping[(">", (50, 150 + i))] = ("^", (50 + i, 149))
 
+    bounds_mapping_only_coords: "dict[tuple[int, int], tuple[int, int]]" = {
+        key[1]: value[1]
+        for key, value in bounds_mapping.items()
+    }
+    print(sorted([key[1] for key in bounds_mapping]))
+    assert len(set(bounds_mapping.values())) == len(bounds_mapping)
     for instruction in path:
         print(f"{pos}, {facing}, {instruction}")
         if instruction in {"L", "R"}:
@@ -146,21 +151,15 @@ def solve2(input_: str) -> "int":
         for _ in range(int(instruction)):
             x, y = move(pos, facing)
             print(x, y, FACING[facing])
-            if FACING[facing] in {"^", "v"}:
-                if y < 0 or y >= len(lines) or lines[y][x] == " ":
-                    dir_, (x, y) = bounds_mapping[(FACING[facing], (x, y))]
-                    facing = FACING_REVERSE[dir_]
-                else:
-                    assert (x, y) not in bounds_mapping
-            elif FACING[facing] in {">", "<"}:
-                if x < 0 or x >= len(lines[y]) or lines[y][x] == " ":
-                    dir_, (x, y) = bounds_mapping[(FACING[facing], (x, y))]
-                    facing = FACING_REVERSE[dir_]
-                else:
-                    assert (x, y) not in bounds_mapping
-            else:
-                raise AssertionError()
-            assert move(pos, facing) != pos and bounds_mapping.get((FACING[facing], move(pos, facing))) != pos
+            if (
+                (y < 0 or y >= len(lines))
+                or (x < 0 or x >= len(lines[y]))
+                or lines[y][x] == " "
+            ):
+                dir_, (x, y) = bounds_mapping[(FACING[facing], (x, y))]
+                facing = FACING_REVERSE[dir_]
+            assert (x, y) not in bounds_mapping_only_coords, f"{(x, y)} {bounds_mapping_only_coords.get((x, y))}"
+            assert move((x, y), facing) != (x, y) and bounds_mapping.get((FACING[facing], move((x, y), facing))) != (x, y)
             if lines[y][x] in {".", "<", ">", "v", "^"}:
                 lines[pos[1]][pos[0]] = FACING[facing]
                 pos = x, y
@@ -181,9 +180,6 @@ def solve1(input_: str) -> "int":
     for line in lines:
         if len(line) < width:
             line.extend([" "] * (width - len(line)))
-    # print("\n".join(["".join(line) for line in lines]))
-    height = len(lines)
-    res2 = 0
 
     facing = 0
     pos: "tuple[int, int]" = (lines[0].index("."), 0)
