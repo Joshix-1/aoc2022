@@ -1,4 +1,5 @@
 input
 !00/input
 .idea/
-test-in
+test-in*
+__pycache__
