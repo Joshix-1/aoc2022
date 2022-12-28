@@ -5,22 +5,13 @@ import sys
 names = {}
 
 
-def parse_name(name):
-    if name in names:
-        return names[name]
-    assert len(name) == 2
-    a = ord("A")
-    n1, n2 = ord(name[0]) - a, ord(name[1]) - a
-    names[name] = n1 * 100 + n2
-    return names[name]
-
-
 class Valve:
     name: str
     flow_rate: int
     _next_valves: "list[str]"
     valves: "dict[str, Valve]"
     score_cache: "dict"
+    opened: bool
 
     def __init__(self, line: str, valves: "dict[str, Valve]") -> None:
         match = re.match(
@@ -29,11 +20,12 @@ class Valve:
         )
         if match is None:
             print(line)
-        self.name = parse_name(match.group(1))
+        self.name = match.group(1)
         self.flow_rate = int(match.group(2))
-        self._next_valves = [parse_name(valve.strip()) for valve in match.group(3).split(",")]
+        self._next_valves = [valve.strip() for valve in match.group(3).split(",")]
         self.valves = valves
         self.score_cache = {}
+        self.opened = False
         del match
         del line
 
@@ -47,10 +39,6 @@ class Valve:
             return 0
         if not self.flow_rate and len(self._next_valves) == 1 and time < 30:
             return 0
-        #if not self.flow_rate and self.name not in already_opened:
-        #    # doesn't make sense to open this
-        #    already_opened = (*already_opened, self.name)
-        # already_opened = tuple(sorted(set(already_opened)))
         key = hash((time, already_opened))
         if key in self.score_cache:
             return self.score_cache[key]
@@ -73,10 +61,8 @@ class Valve:
                 print(s)
             if s > score:
                 score = s
-        # print(self.name, time, score, self.flow_rate, s, already_opened)
         self.score_cache[key] = score
         del already_opened, key
-        # gc.collect_step() #gc.collect()
         return score
 
 
@@ -86,7 +72,7 @@ def solve(input_: str) -> int:
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    current_valve = valves[parse_name("AA")]
+    current_valve = valves["AA"]
     return current_valve.get_best_score(30, ())
 
 
@@ -96,14 +82,20 @@ def solve2(input_: str) -> int:
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    el_valve = my_valve = valves[parse_name("AA")]
-
+    el_valve = my_valve = valves["AA"]
+    score = 0
+    for minute in range(26):
+        for el_new in el_valve.next_valves:
+            ...
+        for my_new in my_valve.next_valves:
+            ...
+    return score
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
         text = sys.stdin.read()
-        res1 = -1  # solve(text)
+        res1 = solve(text)
         res2 = solve2(text)
     finally:
         sys.stdout = stdout
