@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env pypy3
 import re
 import sys
 from typing import Iterable
@@ -49,9 +49,14 @@ class Sensor:
         dist = self.distance + 1
         x, y = self.sensor
         for diff_x in range(-dist, dist + 1):
-            _x, _y = x + diff_x, y + dist - diff_x
+            _x = x + diff_x
+            _y = y + dist - diff_x
             if min_ <= _x <= max_ and min_ <= _y <= max_:
                 yield _x, _y
+            if dist - diff_x:
+                _y = (y - dist - diff_x)
+                if min_ <= _x <= max_ and min_ <= _y <= max_:
+                    yield _x, _y
         return
 
 
