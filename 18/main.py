@@ -1,5 +1,6 @@
 #!/usr/bin/env pypy3
 import sys
+from collections import defaultdict
 from typing import Iterable, Literal, cast
 from enum import Enum
 
@@ -55,29 +56,14 @@ class Cube:
             )
             yield cast(tuple[int, int, int], tuple(pos))
 
-    def neighboring_voids(self, filter_: "Void | None" = None) -> tuple[tuple[int, int, int], ...]:
+    def neighboring_voids(self) -> tuple[tuple[int, int, int], ...]:
         if not hasattr(self, "_neighboring_voids"):
             self._neighboring_voids = tuple(
                 neighbor
                 for neighbor in self.neighbors
                 if neighbor not in self.cube_pos
             )
-        if filter_ is None:
-            return self._neighboring_voids
-        return tuple(
-            void
-            for void in self._neighboring_voids
-            if filter_.pos != void
-        )
-
-    def neighboring_cubes(self) -> tuple[tuple[int, int, int], ...]:
-        if not hasattr(self, "_neighboring_cubes"):
-            self._neighboring_cubes = tuple(
-                neighbor
-                for neighbor in self.neighbors
-                if neighbor in self.cube_pos
-            )
-        return self._neighboring_cubes
+        return self._neighboring_voids
 
     def __repr__(self) -> str:
         return f"Cube({self.pos!r})"
@@ -90,26 +76,14 @@ class Cube:
 
 
 class Void(Cube):
-    def is_enclosed_by_cubes(self) -> "Literal[False] | list[Cube]":
-        neighboring_voids = self.neighboring_voids()
-        if not neighboring_voids:
-            return [Cube(n, self.cube_pos) for n in self.neighboring_cubes()]
-
-        if len(neighboring_voids) > 1:
-            return False
-
-        cubes = list(self.neighboring_cubes())
-        prev = self
-        current = Void(neighboring_voids[0], self.cube_pos)
-        cubes.extend(current.neighboring_cubes())
-        while len(current.neighboring_voids()) == 2:
-            a, b = current.neighboring_voids()
-            next_ = Void(b if a == prev else a, self.cube_pos)
-            cubes.extend(next_.neighboring_cubes())
-
-        return [
-            Cube(n, self.cube_pos) for n in cubes
-        ] if len(current.neighboring_voids()) == 0 else False
+    def neighboring_cubes(self) -> tuple[tuple[int, int, int], ...]:
+        if not hasattr(self, "_neighboring_cubes"):
+            self._neighboring_cubes = tuple(
+                neighbor
+                for neighbor in self.neighbors
+                if neighbor in self.cube_pos
+            )
+        return self._neighboring_cubes
 
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
@@ -119,18 +93,37 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
         cube_pos[cube.pos] = cube
     cubes = list(cube_pos.values())
     res1, res2 = 0, 0
-    free: list[tuple[int, int, int]] = []
     for cube in cubes:
         free_s = cube.neighboring_voids()
         res1 += len(free_s)
-        free.extend(free_s)
     res2 = res1
-    for pos in set(free):
-        void = Void(pos, cube_pos)
-        enclosed = void.is_enclosed_by_cubes()
-        if enclosed:
-            res2 -= len(enclosed)
-    return res1, res2
+    min_x = min(c.x for c in cubes) - 1
+    min_y = min(c.y for c in cubes) - 1
+    min_z = min(c.z for c in cubes) - 1
+    max_x = max(c.x for c in cubes) + 1
+    max_y = max(c.y for c in cubes) + 1
+    max_z = max(c.z for c in cubes) + 1
+
+    start = (min_x, min_y, min_z)  # 100% outside
+    checked: set[tuple[int, int, int]] = set()
+    free_to_check: list[tuple[int, int, int]] = [start]
+    exposed_faces: dict[tuple[int, int, int], int] = defaultdict(int)
+    while free_to_check:
+        x, y, z = curr_pos = free_to_check.pop(0)
+        if curr_pos in checked:
+            continue
+        checked.add(curr_pos)
+        if x < min_x or y < min_y or z < min_z:
+            continue
+        if x > max_x or y > max_y or z > max_z:
+            continue
+        assert curr_pos not in cube_pos
+        current = Void(curr_pos, cube_pos)
+        for cube in current.neighboring_cubes():
+            exposed_faces[cube] += 1
+        free_to_check.extend(current.neighboring_voids())
+
+    return res1, sum(exposed_faces.values())
 
 
 def main() -> None:
