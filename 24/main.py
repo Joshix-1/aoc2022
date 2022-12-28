@@ -1,7 +1,8 @@
 #!/usr/bin/env pypy3
 import sys
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import NamedTuple
+from functools import cache
 
 class Blizzard:
     def __init__(self, char: str, x: int, y: int) -> None:
@@ -25,7 +26,7 @@ class Blizzard:
                 y = height - 2
             elif y >= height - 1:
                 y = 1
-        if self.char in {"<", ">"}:
+        else:
             x += -1 if self.char == "<" else 1
             if x < 1:
                 x = width - 2
@@ -45,37 +46,47 @@ class State(NamedTuple):
     def pos(self) -> tuple[int, int]:
         return self.x, self.y
 
-    def get_next_moves(self) -> "Iterable[State]":
+    def get_next_moves(
+        self,
+        get_blizz_positions: Callable[[int], frozenset[tuple[int, int]]],
+        maze: Sequence[Sequence[str]],
+    ) -> "Iterable[State]":
         minute = self.minute + 1
+        blizz_pos = get_blizz_positions(minute)
         curr_pos = x, y = self.pos
-        visited = self.visited[-50:] + (curr_pos,)
-        return (
-            State(minute, *pos, visited=tuple(visited))
-            for pos in [
-                (x + 1, y),
-                (x, y + 1),
-                (x - 1, y),
-                (x, y - 1),
-                curr_pos,
-            ]
-            if pos not in visited or visited.count(pos) < 10
-            if min(pos) >= 0
-        )
+        visited = self.visited[-1000:] + (curr_pos,)
+        yield_count = 0
+        for pos in (
+            (x + 1, y),
+            (x, y + 1),
+            (x - 1, y),
+            (x, y - 1),
+            curr_pos,
+        ):
+            if pos[0] < 0 or pos[0] >= len(maze[0]) or pos[1] < 0 or pos[1] >= len(maze):
+                continue
+            if maze[pos[1]][pos[0]] == "#":
+                continue
+            if pos in blizz_pos:
+                continue
+            if pos in visited and (visited.count(pos) > 10 or yield_count > 1):
+                continue
+            yield_count += 1
+            yield State(minute, *pos, visited=tuple(visited))
+        return
 
-def test():
-    pass
 
 def print_m_b(
-    maze: list[list[str]],
+    maze: tuple[list[str], ...],
     blizzards: list[Blizzard],
     minute: int,
     pos: "tuple[int, int] | None"
-):
+) -> None:
     width, height = len(maze[0]), len(maze)
-    maze: list[list[str]] = [
+    maze = tuple(
         [cell for cell in row]
         for row in maze
-    ]
+    )
     blizz_pos = {
         blizz.get_pos_at(minute, width, height): blizz
         for blizz in blizzards
@@ -103,7 +114,7 @@ def print_m_b(
         print()
 
 def solve(input_: str) -> "tuple[int | str, int | str]":
-    maze: list[list[str]] = list(map(list, filter(None, input_.split("\n"))))
+    maze: tuple[list[str], ...] = tuple(map(list, filter(None, input_.split("\n"))))
     width, height = len(maze[0]), len(maze)
     pos = (1, 0)
     exi = (width - 2, height - 1)
@@ -116,15 +127,13 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
 
     res1 = -1
     moves: list[State] = [State(0, pos[0], pos[1], ())]
-    blizz_pos_lists: dict[int, set[tuple[int, int]]] = {}
 
-    def get_blizz_pos_list(_min: int) -> set[tuple[int, int]]:
-        if _min not in blizz_pos_lists:
-            blizz_pos_lists[_min] = set(
-                blizz.get_pos_at(_min, width, height)
-                for blizz in blizzards
-            )
-        return blizz_pos_lists[_min]
+    @cache
+    def get_blizz_positions(_min: int) -> frozenset[tuple[int, int]]:
+        return frozenset(
+            blizz.get_pos_at(_min, width, height)
+            for blizz in blizzards
+        )
 
     last_minute = 0
     while moves:
@@ -137,12 +146,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
             last_minute = move.minute
             print(move.minute, "moves:", len(moves))
         # print_m_b(maze, blizzards, minute, (x, y))
-        moves.extend(
-            m
-            for m in move.get_next_moves()
-            if m.pos not in get_blizz_pos_list(m.minute)
-            if maze[m.y][m.x] != "#"
-        )
+        moves.extend(move.get_next_moves(get_blizz_positions, maze))
 
     # for m in range(minute):
     #     print_m_b(maze, blizzards, m, None)
@@ -150,13 +154,14 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     return res1, -1
 
 
-def main() -> None:
+def main() -> "None | int":
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
         res1, res2 = solve(sys.stdin.read())
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
+    return None
 
 
 if __name__ == "__main__":
