@@ -1,11 +1,9 @@
 #!/usr/bin/env pypy3
 import re
 import sys
-import gc
-
-#sys.setrecursionlimit(2**10)
 
 names = {}
+
 
 def parse_name(name):
     if name in names:
@@ -15,6 +13,7 @@ def parse_name(name):
     n1, n2 = ord(name[0]) - a, ord(name[1]) - a
     names[name] = n1 * 100 + n2
     return names[name]
+
 
 class Valve:
     name: str
@@ -81,67 +80,31 @@ class Valve:
         return score
 
 
-def solve(input_: str) -> "tuple[int | str, int | str]":
+def solve(input_: str) -> int:
     lines: list[str] = list(filter(None, input_.split("\n")))
     valves: dict[str, Valve] = {}
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    res2 = 0
     current_valve = valves[parse_name("AA")]
-    res1 = current_valve.get_best_score(30, ())
-    del valves, current_valve
-    print("- - - - -", res1)
+    return current_valve.get_best_score(30, ())
+
+
+def solve2(input_: str) -> int:
+    lines: list[str] = list(filter(None, input_.split("\n")))
     valves: dict[str, Valve] = {}
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    me = valves[parse_name("AA")]
-    el = valves[parse_name("AA")]
-
-    not_opened = {v.name for v in valves.values() if v.flow_rate}
-    visited = set()
-    print(not_opened)
-    time = 26
-    score = 0
-    while time > 0 and not_opened:
-        s = 0
-        if me.name in not_opened:
-            print("opening", me.name)
-            s += (time - 1) * me.flow_rate
-            not_opened.remove(me.name)
-        else:
-            print(me.name, "not in", not_opened)
-            for v in me.next_valves:
-                if me.name not in visited:
-                    me = v
-                    visited.add(v)
-                    break
-
-        if el.name in not_opened:
-            print("opening", el.name)
-            s += (time - 1) * el.flow_rate
-            not_opened.remove(el.name)
-        else:
-            print(el.name, "not in", not_opened)
-            for v in el.next_valves:
-                if el.name not in visited:
-                    el = v
-                    visited.add(v)
-                    break
-
-        time -= 1
-        score += s
-
-    print(time, not_opened)
-
-    return res1, score
+    el_valve = my_valve = valves[parse_name("AA")]
 
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
-        res1, res2 = solve(sys.stdin.read())
+        text = sys.stdin.read()
+        res1 = -1  # solve(text)
+        res2 = solve2(text)
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
