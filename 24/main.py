@@ -36,15 +36,21 @@ class Blizzard:
         return x, y
 
 
-class State(NamedTuple):
+class State:
     minute: int
-    x: int
-    y: int
-    visited: tuple[tuple[int, int], ...]
+    pos: tuple[int, int]
+
+    def __init__(self, minute: int, pos: tuple[int, int]) -> None:
+        self.minute = minute
+        self.pos = pos
 
     @property
-    def pos(self) -> tuple[int, int]:
-        return self.x, self.y
+    def x(self) -> int:
+        return self.pos[0]
+
+    @property
+    def y(self) -> int:
+        return self.pos[1]
 
     def get_next_moves(
         self,
@@ -54,7 +60,6 @@ class State(NamedTuple):
         minute = self.minute + 1
         blizz_pos = get_blizz_positions(minute)
         curr_pos = x, y = self.pos
-        visited = self.visited[-1000:] + (curr_pos,)
         yield_count = 0
         for pos in (
             (x + 1, y),
@@ -65,14 +70,12 @@ class State(NamedTuple):
         ):
             if pos[0] < 0 or pos[0] >= len(maze[0]) or pos[1] < 0 or pos[1] >= len(maze):
                 continue
-            if maze[pos[1]][pos[0]] == "#":
+            if pos in blizz_pos or maze[pos[1]][pos[0]] == "#":
                 continue
-            if pos in blizz_pos:
-                continue
-            if pos in visited and (visited.count(pos) > 10 or yield_count > 1):
-                continue
+            yield State(minute, pos)
             yield_count += 1
-            yield State(minute, *pos, visited=tuple(visited))
+            if yield_count > 1:
+                return
         return
 
 
@@ -113,6 +116,7 @@ def print_m_b(
                 print(" " if pos != (x, y) else "E", end="", flush=False)
         print()
 
+
 def solve(input_: str) -> "tuple[int | str, int | str]":
     maze: tuple[list[str], ...] = tuple(map(list, filter(None, input_.split("\n"))))
     width, height = len(maze[0]), len(maze)
@@ -126,7 +130,7 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
                 #maze[y][x] = "."
 
     res1 = -1
-    moves: list[State] = [State(0, pos[0], pos[1], ())]
+    moves: list[State] = [State(0, pos)]
 
     @cache
     def get_blizz_positions(_min: int) -> frozenset[tuple[int, int]]:
