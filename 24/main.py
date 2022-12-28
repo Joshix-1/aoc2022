@@ -64,18 +64,21 @@ class State:
         for pos in (
             (x + 1, y),
             (x, y + 1),
-            (x - 1, y),
             (x, y - 1),
+            (x - 1, y),
             curr_pos,
         ):
-            if pos[0] < 0 or pos[0] >= len(maze[0]) or pos[1] < 0 or pos[1] >= len(maze):
-                continue
-            if pos in blizz_pos or maze[pos[1]][pos[0]] == "#":
+            if (
+                (yield_count and pos == curr_pos)
+                or pos[0] < 0 or pos[0] >= len(maze[0])
+                or pos[1] < 0 or pos[1] >= len(maze)
+                or pos in blizz_pos or maze[pos[1]][pos[0]] == "#"
+            ):
                 continue
             yield State(minute, pos)
-            yield_count += 1
-            if yield_count > 1:
+            if yield_count:
                 return
+            yield_count += 1
         return
 
 
@@ -120,6 +123,7 @@ def print_m_b(
 def solve(input_: str) -> "tuple[int | str, int | str]":
     maze: tuple[list[str], ...] = tuple(map(list, filter(None, input_.split("\n"))))
     width, height = len(maze[0]), len(maze)
+    print(width, "x", height)
     pos = (1, 0)
     exi = (width - 2, height - 1)
     blizzards: list[Blizzard] = []
