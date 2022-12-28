@@ -36,23 +36,6 @@ class Blizzard:
         self.cache[minute] = x, y
         return x, y
 
-
-class State:
-    minute: int
-    pos: tuple[int, int]
-
-    def __init__(self, minute: int, pos: tuple[int, int]) -> None:
-        self.minute = minute
-        self.pos = pos
-
-    @property
-    def x(self) -> int:
-        return self.pos[0]
-
-    @property
-    def y(self) -> int:
-        return self.pos[1]
-
 def get_next_moves(
     curr_pos: tuple[int, int],
     blizz_positions: frozenset[tuple[int, int]],
@@ -146,11 +129,31 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
             res1 = minute
             break
         positions = next_pos
+    positions = {exi}
+    for minute in count(res1, 1):
+        print(minute, len(positions))
+        next_pos: set[tuple[int, int]] = set()
+        for _pos in positions:
+            next_pos.update(get_next_moves(_pos, get_blizz_positions(minute), maze))
+        if pos in next_pos:
+            res2 = minute
+            break
+        positions = next_pos
+    positions = {pos}
+    for minute in count(res2, 1):
+        print(minute, len(positions))
+        next_pos: set[tuple[int, int]] = set()
+        for _pos in positions:
+            next_pos.update(get_next_moves(_pos, get_blizz_positions(minute), maze))
+        if exi in next_pos:
+            res2 = minute
+            break
+        positions = next_pos
 
     # for m in range(minute):
     #     print_m_b(maze, blizzards, m, None)
 
-    return res1, -1
+    return res1, res2
 
 
 def main() -> "None | int":
