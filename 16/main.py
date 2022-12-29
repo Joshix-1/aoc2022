@@ -1,4 +1,5 @@
 #!/usr/bin/env pypy3
+import random
 import re
 import sys
 from itertools import count
@@ -70,7 +71,7 @@ class Valve:
         ]
         if not next_valve_with_dist:
             return None
-        next_valve_with_dist.sort()
+        next_valve_with_dist.sort(key=lambda x: x[0])
         return next_valve_with_dist.pop()[1:]
 
     def get_best_score(self, time: int, already_opened: "tuple[str, ...]") -> int:
@@ -128,7 +129,10 @@ def solve2(input_: str) -> int:
     minutes = {"el": 26, "my": 26}
     score = 0
     while minutes["el"] > 0 and minutes["my"] > 0:
-        curr = "my" if minutes["el"] < minutes["my"] else "el"
+        if minutes["el"] == minutes["my"]:
+            curr = random.choice(("my", "el"))
+        else:
+            curr = "my" if minutes["el"] < minutes["my"] else "el"
         valve = valves[curr]
         res = valve.get_best_next(minutes[curr], opened)
         if res is None:
