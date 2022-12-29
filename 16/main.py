@@ -1,6 +1,7 @@
 #!/usr/bin/env pypy3
 import re
 import sys
+from itertools import count
 
 names = {}
 
@@ -12,6 +13,7 @@ class Valve:
     valves: "dict[str, Valve]"
     score_cache: "dict"
     opened: bool
+    _next_valve_with_dist: "tuple[tuple[int, Valve], ...]"
 
     def __init__(self, line: str, valves: "dict[str, Valve]") -> None:
         match = re.match(
@@ -29,9 +31,47 @@ class Valve:
         del match
         del line
 
+    def __repr__(self) -> str:
+        return f"Valve({self.name!r}, {self.flow_rate!r}, {self._next_valves!r})"
+
     @property
     def next_valves(self) -> "list[Valve]":
         return [self.valves[v] for v in self._next_valves]
+
+    def next_valve_with_dist(self) -> "tuple[tuple[int, Valve], ...]":
+        if not hasattr(self, "_next_valve_with_dist"):
+            next_valves = self.next_valves
+            next_valve_with_dist: "list[tuple[int, Valve]]" = []
+            checked_valves: set[str] = {self.name}
+            for dist in count(1, 1):
+                valves = list(next_valves)
+                next_valves = []
+                for valve in valves:
+                    if valve.name in checked_valves:
+                        continue
+                    checked_valves.add(valve.name)
+                    next_valves.extend(
+                        v for v in valve.next_valves if v.name not in checked_valves
+                    )
+                    if valve.flow_rate:
+                        # assert valve.name not in tuple(vv.name for _, vv in next_valve_with_dist)
+                        next_valve_with_dist.append((dist, valve))
+                if not next_valves:
+                    break
+            self._next_valve_with_dist = tuple(next_valve_with_dist)
+
+        return self._next_valve_with_dist
+
+    def get_best_next(self, minutes_left: int, exclude_names: set[str]) -> "None | tuple[int, Valve]":
+        next_valve_with_dist = [
+            (valve.flow_rate * (minutes_left - dist - 1), dist, valve)
+            for dist, valve in self.next_valve_with_dist()
+            if dist < minutes_left and valve.name not in exclude_names
+        ]
+        if not next_valve_with_dist:
+            return None
+        next_valve_with_dist.sort()
+        return next_valve_with_dist.pop()[1:]
 
     def get_best_score(self, time: int, already_opened: "tuple[str, ...]") -> int:
         if time <= 1:
@@ -82,20 +122,32 @@ def solve2(input_: str) -> int:
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    el_valve = my_valve = valves["AA"]
+    # print("\n".join(map(repr, valves["AA"].next_valve_with_dist())))
+    opened: set[str] = set()
+    valves = {"el": valves["AA"], "my": valves["AA"]}
+    minutes = {"el": 26, "my": 26}
     score = 0
-    for minute in range(26):
-        for el_new in el_valve.next_valves:
-            ...
-        for my_new in my_valve.next_valves:
-            ...
+    while minutes["el"] > 0 and minutes["my"] > 0:
+        curr = "my" if minutes["el"] < minutes["my"] else "el"
+        valve = valves[curr]
+        res = valve.get_best_next(minutes[curr], opened)
+        if res is None:
+            minutes[curr] = 0
+            continue
+        time, valves[curr] = res
+        minutes[curr] -= time + 1
+        opened.add(valves[curr].name)
+        score += valves[curr].flow_rate * minutes[curr]
+        print(curr, 26 - minutes[curr], valves[curr], opened)
+
     return score
+
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
         text = sys.stdin.read()
-        res1 = solve(text)
+        res1 = -1  # solve(text)
         res2 = solve2(text)
     finally:
         sys.stdout = stdout
