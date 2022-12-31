@@ -2,7 +2,10 @@
 import random
 import re
 import sys
+from collections.abc import Iterable
+from dataclasses import dataclass
 from itertools import count
+from typing import Literal
 
 names = {}
 
@@ -63,16 +66,12 @@ class Valve:
 
         return self._next_valve_with_dist
 
-    def get_best_next(self, minutes_left: int, exclude_names: set[str]) -> "None | tuple[int, Valve]":
-        next_valve_with_dist = [
-            (valve.flow_rate * (minutes_left - dist - 1), dist, valve)
+    def get_possible_next(self, minutes_left: int, exclude_names: Iterable[str]) -> "Iterable[tuple[int, Valve]]":
+        return (
+            (dist, valve)
             for dist, valve in self.next_valve_with_dist()
             if dist < minutes_left and valve.name not in exclude_names
-        ]
-        if not next_valve_with_dist:
-            return None
-        next_valve_with_dist.sort(key=lambda x: x[0])
-        return next_valve_with_dist.pop()[1:]
+        )
 
     def get_best_score(self, time: int, already_opened: "tuple[str, ...]") -> int:
         if time <= 1:
@@ -107,6 +106,66 @@ class Valve:
         return score
 
 
+@dataclass
+class TwoState:
+    valves: dict[str, Valve]
+    opened_names: frozenset[str]
+    el_minutes_left: int
+    my_minutes_left: int
+    el_valve: Valve
+    my_valve: Valve
+
+    def create_copy_with(
+        self, el_my: "Literal['my', 'el']", valve: Valve, minutes_left: int
+    ) -> "TwoState":
+        return TwoState(
+            valves=self.valves,
+            opened_names=self.opened_names | {valve.name},
+            el_minutes_left=self.el_minutes_left if el_my == "my" else minutes_left,
+            my_minutes_left=self.my_minutes_left if el_my == "el" else minutes_left,
+            el_valve=self.el_valve if el_my == "my" else valve,
+            my_valve=self.my_valve if el_my == "el" else valve,
+        )
+
+    def get_valve(self, el_my: "Literal['my', 'el']") -> Valve:
+        return getattr(self, el_my + "_valve")
+
+    def get_minutes_left(self, el_my: "Literal['my', 'el']") -> int:
+        return getattr(self, el_my + "_minutes_left")
+
+    def iter_next(self) -> "Iterable[tuple[int, TwoState]]":
+        curr: Literal['my', 'el']
+        if self.my_minutes_left <= 1 and self.el_minutes_left <= 1:
+            return ()
+        poss = ("el", "my")
+        if self.my_minutes_left == self.el_minutes_left and self.el_valve == self.my_valve:
+            poss = ("my",)
+        for curr in poss:
+            valve = self.get_valve(curr)
+            minutes_left = self.get_minutes_left(curr)
+            # assert (valve.flow_rate and valve.name in self.opened_names) or valve.name == "AA"
+            for dist, next_valve in valve.get_possible_next(minutes_left, self.opened_names):
+                new_minutes_left = minutes_left - dist - 1
+                if not new_minutes_left:
+                    continue
+                assert new_minutes_left > 0
+                yield next_valve.flow_rate * new_minutes_left, self.create_copy_with(
+                    curr,
+                    next_valve,
+                    new_minutes_left,
+                )
+        return
+
+    def get_max_score(self) -> int:
+        return max(
+            [
+                score + ts.get_max_score()
+                for score, ts in self.iter_next()
+            ],
+            default=0,
+        )
+
+
 def solve(input_: str) -> int:
     lines: list[str] = list(filter(None, input_.split("\n")))
     valves: dict[str, Valve] = {}
@@ -123,35 +182,22 @@ def solve2(input_: str) -> int:
     for line in lines:
         valve = Valve(line, valves)
         valves[valve.name] = valve
-    # print("\n".join(map(repr, valves["AA"].next_valve_with_dist())))
-    opened: set[str] = set()
-    valves = {"el": valves["AA"], "my": valves["AA"]}
-    minutes = {"el": 26, "my": 26}
-    score = 0
-    while minutes["el"] > 0 and minutes["my"] > 0:
-        if minutes["el"] == minutes["my"]:
-            curr = random.choice(("my", "el"))
-        else:
-            curr = "my" if minutes["el"] < minutes["my"] else "el"
-        valve = valves[curr]
-        res = valve.get_best_next(minutes[curr], opened)
-        if res is None:
-            minutes[curr] = 0
-            continue
-        time, valves[curr] = res
-        minutes[curr] -= time + 1
-        opened.add(valves[curr].name)
-        score += valves[curr].flow_rate * minutes[curr]
-        print(curr, 26 - minutes[curr], valves[curr], opened)
 
-    return score
+    return TwoState(
+        valves=valves,
+        opened_names=frozenset(),
+        el_minutes_left=26,
+        my_minutes_left=26,
+        el_valve=valves["AA"],
+        my_valve=valves["AA"],
+    ).get_max_score()
 
 
 def main() -> None:
     stdout, sys.stdout = sys.stdout, sys.stderr
     try:
         text = sys.stdin.read()
-        res1 = -1  # solve(text)
+        res1 = solve(text)
         res2 = solve2(text)
     finally:
         sys.stdout = stdout
