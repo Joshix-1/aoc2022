@@ -198,7 +198,8 @@ def main() -> None:
     try:
         text = sys.stdin.read()
         res1 = solve(text)
-        res2 = solve2(text)
+        print("finished part 1, please wait :(")
+        res2 = solve2(text)  # bit slow :(
     finally:
         sys.stdout = stdout
     print(f"1: {res1}\n2: {res2}")
