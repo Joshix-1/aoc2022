@@ -96,7 +96,6 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
     for cube in cubes:
         free_s = cube.neighboring_voids()
         res1 += len(free_s)
-    res2 = res1
     min_x = min(c.x for c in cubes) - 1
     min_y = min(c.y for c in cubes) - 1
     min_z = min(c.z for c in cubes) - 1
@@ -122,7 +121,6 @@ def solve(input_: str) -> "tuple[int | str, int | str]":
         for cube in current.neighboring_cubes():
             exposed_faces[cube] += 1
         free_to_check.extend(current.neighboring_voids())
-
     return res1, sum(exposed_faces.values())
 
 
