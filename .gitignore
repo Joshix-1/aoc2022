@@ -1,5 +1,8 @@
-input
-!00/input
 .idea/
-test-in*
 __pycache__
+
+input
+test-input
+
+!00/input
+!00/test-input
